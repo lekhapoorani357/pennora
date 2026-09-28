@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import time
 from typing import Any, Dict, Optional, List
 import requests
 
@@ -34,6 +35,9 @@ class OllamaResponseError(OllamaError):
 class OllamaClient:
     """Client for communicating with a local Ollama server."""
 
+    _cached_available: Optional[bool] = None
+    _last_check_time: float = 0.0
+
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -50,15 +54,24 @@ class OllamaClient:
 
     def is_available(self) -> bool:
         """Checks if the local Ollama server is running and reachable."""
-        self._sanitize_env()
-        url = f"{self.base_url}/api/tags"
+        now = time.time()
+        if OllamaClient._cached_available is not None and (now - OllamaClient._last_check_time) < 30.0:
+            return OllamaClient._cached_available
+
+        import socket
+        from urllib.parse import urlparse
         try:
-            resp = requests.get(url, timeout=3)
-            return resp.status_code == 200
-        except (requests.ConnectionError, requests.Timeout):
-            return False
+            parsed = urlparse(self.base_url)
+            host = parsed.hostname or "127.0.0.1"
+            port = parsed.port or 11434
+            with socket.create_connection((host, port), timeout=0.25):
+                available = True
         except Exception:
-            return False
+            available = False
+
+        OllamaClient._cached_available = available
+        OllamaClient._last_check_time = now
+        return available
 
     def list_models(self) -> List[str]:
         """Returns the list of model names currently installed in Ollama."""
@@ -152,3 +165,49 @@ class OllamaClient:
             )
 
         return parsed_json
+
+    def generate_text(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.1,
+    ) -> str:
+        """Calls the local Ollama chat API requesting natural language response."""
+        self._sanitize_env()
+
+        url = f"{self.base_url}/api/chat"
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+            },
+        }
+
+        try:
+            resp = requests.post(url, json=payload, timeout=self.timeout)
+        except requests.ConnectionError as e:
+            raise OllamaConnectionError(
+                f"Could not connect to Ollama at {self.base_url}. Ensure Ollama is running. Details: {e}"
+            ) from e
+        except requests.Timeout as e:
+            raise OllamaTimeoutError(
+                f"Ollama request timed out after {self.timeout}s using model '{self.model}'."
+            ) from e
+        except Exception as e:
+            raise OllamaError(f"Unexpected error communicating with Ollama: {e}") from e
+
+        if resp.status_code != 200:
+            raise OllamaResponseError(
+                f"Ollama returned HTTP {resp.status_code}: {resp.text}"
+            )
+
+        try:
+            data = resp.json()
+            return data.get("message", {}).get("content", "").strip()
+        except Exception as e:
+            raise OllamaResponseError(f"Failed to parse Ollama text response: {e}") from e

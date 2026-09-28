@@ -13,6 +13,9 @@ class User(Base):
     deviceId = Column(String(255), index=True, nullable=True)
     role = Column(String(50), default="user", nullable=False)
     isAdmin = Column(Boolean, default=False, nullable=False)
+    studentVerificationStatus = Column(String(50), default="unverified", nullable=False)
+    studentInstitution = Column(String(255), nullable=True)
+    studentVerifiedAt = Column(DateTime, nullable=True)
     createdAt = Column(DateTime, default=utc_now, nullable=False)
     updatedAt = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
@@ -34,6 +37,9 @@ class User(Base):
             "deviceId": self.deviceId,
             "role": self.role,
             "isAdmin": self.isAdmin,
+            "studentVerificationStatus": self.studentVerificationStatus,
+            "studentInstitution": self.studentInstitution,
+            "studentVerifiedAt": self.studentVerifiedAt,
             "createdAt": self.createdAt,
             "updatedAt": self.updatedAt,
         }

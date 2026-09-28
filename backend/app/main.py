@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_database, init_db
+from app.dependencies import get_current_user, get_optional_current_user
+
 from app.routes import (
     auth,
     users,
@@ -16,6 +18,9 @@ from app.routes import (
     partners,
     analytics,
     admin,
+    households,
+    tax,
+    reports,
 )
 
 
@@ -57,10 +62,24 @@ app.include_router(pipeline.router)
 app.include_router(insights.router)
 app.include_router(investments.router)
 app.include_router(subscriptions.router)
+app.include_router(households.router)
+app.include_router(tax.router)
+app.include_router(reports.router)
 app.include_router(ads.router)
 app.include_router(partners.router)
 app.include_router(analytics.router)
 app.include_router(admin.router)
+
+
+@app.post("/api/copilot/chat", tags=["AI Copilot Chat"])
+def copilot_chat_alias(
+    payload: investments.CopilotChatRequest,
+    current_user: dict = Depends(get_optional_current_user),
+):
+    """Alias for /api/investments/copilot/chat."""
+    return investments.copilot_chat(payload, current_user)
+
+
 
 
 @app.get("/health", tags=["Health"])

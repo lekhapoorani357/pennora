@@ -1,18 +1,22 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../auth/services/auth_service.dart';
+import '../../../onboarding/services/financial_profile_service.dart';
+import '../../../investment/services/investment_service.dart';
 import '../../models/pipeline_insight_model.dart';
 import '../../services/ai_insights_service.dart';
 
-/// AI Copilot tab — surfaces real LangGraph multi-agent results.
+/// Unified AI Copilot Workspace for Pennora.
 ///
-/// Displays the latest AI pipeline analysis driven by SMS-detected transactions:
-/// - Headline & summary from the Explanation Agent
-/// - Financial state from the Financial State Agent
-/// - Goal impact from the Goal Agent
-/// - Conflicts from the Conflict Agent
-/// - Scenarios from the Scenario Agent
-/// - Execution history of all past analyses
+/// Houses:
+/// 1. Current Financial Snapshot (surplus, emergency reserve, savings rate)
+/// 2. Money Simulator (deterministic SIP, lump-sum, wealth projection across products)
+/// 3. What-If Scenarios (surplus adjustments & goal timeline impacts)
+/// 4. Sourced Matching Investment Options (filtered & ranked deterministically)
+/// 5. Ask Pennora (AI Financial Chatbot powered by Llama 3.2 via verified context)
+/// 6. Multi-Agent Pipeline Status & Execution History
 class AiCopilotPage extends StatefulWidget {
   const AiCopilotPage({super.key});
 
@@ -20,21 +24,177 @@ class AiCopilotPage extends StatefulWidget {
   State<AiCopilotPage> createState() => _AiCopilotPageState();
 }
 
-class _AiCopilotPageState extends State<AiCopilotPage> {
+class _AiCopilotPageState extends State<AiCopilotPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  // Simulator State
+  double _principal = 50000;
+  double _monthlySip = 5000;
+  double _durationYears = 5;
+  final String _selectedCategory = 'ALL';
+  InvestmentSimulationOutput? _simOutput;
+  bool _isLoadingSim = false;
+
+
+  // What-If State
+  double _customDelta = -2000;
+
+  // Sourced Eligible Options State
+  List<MatchingInvestmentOption> _eligibleOptions = [];
+  bool _isLoadingOptions = false;
+
+  // Chatbot State
+  final TextEditingController _chatController = TextEditingController();
+  final ScrollController _chatScrollController = ScrollController();
+  final List<_ChatMessage> _chatMessages = [];
+  bool _isChatLoading = false;
+
   @override
   void initState() {
     super.initState();
-    AiInsightsService.instance.addListener(_onUpdate);
+    _tabController = TabController(length: 2, vsync: this);
+    AiInsightsService.instance.addListener(_onInsightUpdate);
     AiInsightsService.instance.refresh();
+
+    _loadSim();
+    _loadEligibleOptions();
+    _initChatGreetings();
   }
 
   @override
   void dispose() {
-    AiInsightsService.instance.removeListener(_onUpdate);
+    _tabController.dispose();
+    _chatController.dispose();
+    _chatScrollController.dispose();
+    AiInsightsService.instance.removeListener(_onInsightUpdate);
     super.dispose();
   }
 
-  void _onUpdate() => setState(() {});
+  void _onInsightUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  void _initChatGreetings() {
+    _chatMessages.add(
+      _ChatMessage(
+        text:
+            "Hello! I am your Pennora Financial Copilot. I analyze your current financial surplus, active goals, and verified investment options. How can I assist you today?",
+        isUser: false,
+        source: "Pennora Copilot",
+        timestamp: DateTime.now(),
+      ),
+    );
+  }
+
+  String _fmt(double v) {
+    if (v >= 10000000) return '₹${(v / 10000000).toStringAsFixed(2)} Cr';
+    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)} L';
+    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)} K';
+    return '₹${v.toStringAsFixed(0)}';
+  }
+
+  Future<void> _loadSim() async {
+    setState(() => _isLoadingSim = true);
+    final userId = AuthService.instance.currentUser?.id ?? '';
+    final profile = FinancialProfileService.instance.getProfile(userId);
+    final out = await InvestmentClientService.instance.simulate(
+      principal: _principal,
+      monthlyContribution: _monthlySip,
+      durationYears: _durationYears,
+      currentSavings: profile?.savingsReserve ?? 0,
+      monthlySurplus: profile?.monthlySurplus ?? 0,
+      category: _selectedCategory,
+    );
+    if (mounted) {
+      setState(() {
+        _simOutput = out;
+        _isLoadingSim = false;
+      });
+    }
+  }
+
+  Future<void> _loadEligibleOptions() async {
+    setState(() => _isLoadingOptions = true);
+    final opts = await InvestmentClientService.instance.fetchEligibleOptions();
+    if (mounted) {
+      setState(() {
+        _eligibleOptions = opts;
+        _isLoadingOptions = false;
+      });
+    }
+  }
+
+  Future<void> _sendMessage([String? presetText]) async {
+    final text = presetText ?? _chatController.text.trim();
+    if (text.isEmpty) return;
+
+    if (presetText == null) {
+      _chatController.clear();
+    }
+
+    setState(() {
+      _chatMessages.add(
+        _ChatMessage(
+          text: text,
+          isUser: true,
+          timestamp: DateTime.now(),
+        ),
+      );
+      _isChatLoading = true;
+    });
+
+    _scrollChatToBottom();
+
+    // Call backend copilot chat
+    final res = await InvestmentClientService.instance.askCopilot(
+      message: text,
+      principal: _principal,
+      monthlyContribution: _monthlySip,
+      durationYears: _durationYears,
+      whatIfMonthlyDelta: _customDelta,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isChatLoading = false;
+        if (res != null && res['reply'] != null) {
+          _chatMessages.add(
+            _ChatMessage(
+              text: res['reply'].toString(),
+              isUser: false,
+              source: res['source']?.toString() ?? "llama3.2_verified",
+              relevantCards: res['relevant_cards'] as List<dynamic>?,
+              timestamp: DateTime.now(),
+            ),
+          );
+        } else {
+          _chatMessages.add(
+            _ChatMessage(
+              text:
+                  "Based on your verified financial profile, regular disciplined contributions aligned with your current surplus and maintaining 3–6 months of essential reserves provides the strongest foundation for long-term growth.",
+              isUser: false,
+              source: "Pennora Copilot",
+              timestamp: DateTime.now(),
+            ),
+          );
+        }
+      });
+      _scrollChatToBottom();
+    }
+  }
+
+  void _scrollChatToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chatScrollController.hasClients) {
+        _chatScrollController.animateTo(
+          _chatScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,311 +204,1391 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.electricCyan,
-          onRefresh: () => svc.refresh(force: true),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // ─── Header ────────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.pagePaddingH,
-                    vertical: AppDimensions.space20,
-                  ),
-                  child: _buildHeader(isDark, svc),
-                ),
-              ),
-
-              // ─── Content ───────────────────────────────────────────────
-              if (svc.isLoading && !svc.hasData)
-                const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.electricCyan,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                )
-              else if (svc.error != null && !svc.hasData)
-                SliverFillRemaining(
-                  child: _buildErrorState(svc.error!, isDark, svc),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.pagePaddingH,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _buildBody(isDark, svc),
-                      const SizedBox(height: AppDimensions.space32),
-                    ]),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Header ──────────────────────────────────────────────────────────────
-
-  Widget _buildHeader(bool isDark, AiInsightsService svc) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
-            ),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7C3AED).withAlpha(90),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.auto_awesome_rounded,
-              size: 22, color: Colors.white),
-        ),
-        const SizedBox(width: 12),
-        Column(
+      appBar: AppBar(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'AI Copilot',
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
-              'Multi-Agent Financial Intelligence',
+            Text(
+              'Multi-Agent Financial Intelligence Workspace',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: AppColors.primary,
               ),
             ),
           ],
         ),
-        const Spacer(),
-        if (svc.isLoading)
-          const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              color: AppColors.royalBlue,
-              strokeWidth: 2.5,
-            ),
-          )
-        else
-          GestureDetector(
-            onTap: () => svc.refresh(force: true),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.refresh_rounded,
-                size: 20,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-            ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Intelligence',
+            onPressed: () {
+              svc.refresh(force: true);
+              _loadSim();
+              _loadEligibleOptions();
+            },
           ),
-      ],
-    );
-  }
-
-  // ── Body ────────────────────────────────────────────────────────────────
-
-  Widget _buildBody(bool isDark, AiInsightsService svc) {
-    if (!svc.hasInsight) {
-      return _buildNoInsightYet(isDark);
-    }
-
-    final insight = svc.latestInsight!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // AI Analysis Badge
-        _buildAiBadge(insight, isDark),
-        const SizedBox(height: AppDimensions.space16),
-
-        // Headline Card
-        _buildHeadlineCard(insight, isDark),
-        const SizedBox(height: AppDimensions.space16),
-
-        // Financial State
-        if (insight.financialState != null)
-          _buildFinancialStateCard(insight, isDark),
-        if (insight.financialState != null)
-          const SizedBox(height: AppDimensions.space16),
-
-        // Goal Impact
-        if (insight.goals != null && insight.goals!.isNotEmpty)
-          _buildGoalImpactCard(insight, isDark),
-        if (insight.goals != null && insight.goals!.isNotEmpty)
-          const SizedBox(height: AppDimensions.space16),
-
-        // Conflicts
-        _buildConflictCard(insight, isDark),
-        const SizedBox(height: AppDimensions.space16),
-
-        // Scenarios
-        if (insight.hasScenarios)
-          _buildScenariosCard(insight, isDark),
-        if (insight.hasScenarios)
-          const SizedBox(height: AppDimensions.space16),
-
-        // Agent Pipeline Status
-        _buildPipelineStatusCard(insight, isDark),
-        const SizedBox(height: AppDimensions.space24),
-
-        // History
-        _buildHistorySection(svc.history, isDark),
-      ],
-    );
-  }
-
-  // ── No insight state ────────────────────────────────────────────────────
-
-  Widget _buildNoInsightYet(bool isDark) {
-    return Column(
-      children: [
-        const SizedBox(height: AppDimensions.space32),
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.electricCyan.withAlpha(20),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.electricCyan.withAlpha(60)),
-          ),
-          child: const Icon(Icons.auto_awesome_rounded,
-              size: 36, color: AppColors.electricCyan),
-        ),
-        const SizedBox(height: AppDimensions.space20),
-        Text(
-          'No AI Analysis Yet',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.space8),
-        Text(
-          'Pennora AI will analyse your financial transactions in real-time as transactions are recorded.\n\nOnce a transaction is processed through the 6-agent pipeline, the full analysis will appear here.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.6,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.space24),
-        _AgentChip(label: 'Transaction Agent', color: AppColors.electricCyan),
-        const SizedBox(height: 8),
-        _AgentChip(label: 'Financial State Agent', color: AppColors.mint),
-        const SizedBox(height: 8),
-        _AgentChip(label: 'Goal Agent', color: const Color(0xFF64B5F6)),
-        const SizedBox(height: 8),
-        _AgentChip(label: 'Conflict Agent', color: AppColors.warning),
-        const SizedBox(height: 8),
-        _AgentChip(label: 'Scenario Agent', color: const Color(0xFFBA68C8)),
-        const SizedBox(height: 8),
-        _AgentChip(label: 'Explanation Agent', color: AppColors.electricCyan),
-      ],
-    );
-  }
-
-  // ── AI Badge ────────────────────────────────────────────────────────────
-
-  Widget _buildAiBadge(PipelineInsight insight, bool isDark) {
-    final stages = insight.completedStages.length;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.electricCyan.withAlpha(25),
-            AppColors.mint.withAlpha(15),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppColors.primary,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          tabs: const [
+            Tab(text: 'Intelligence & Simulator'),
+            Tab(text: 'Multi-Agent Pipeline'),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.electricCyan.withAlpha(70)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          const Icon(Icons.check_circle_rounded,
-              size: 14, color: AppColors.electricCyan),
-          const SizedBox(width: 6),
-          Text(
-            '$stages/6 AGENTS COMPLETE',
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: AppColors.electricCyan,
-            ),
-          ),
-          const Spacer(),
-          if (insight.processedAt != null)
-            Text(
-              _formatTime(insight.processedAt!),
-              style: TextStyle(
-                fontSize: 10,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ),
-            ),
+          _buildWorkspaceView(isDark),
+          _buildPipelineView(isDark, svc),
         ],
       ),
     );
   }
 
-  // ── Headline Card ───────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 1: FINANCIAL INTELLIGENCE & SIMULATOR WORKSPACE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildWorkspaceView(bool isDark) {
+    final userId = AuthService.instance.currentUser?.id ?? '';
+    final profile = FinancialProfileService.instance.getProfile(userId);
+    final surplus = profile?.monthlySurplus ?? 0.0;
+    final savings = profile?.savingsReserve ?? 0.0;
+    final essential = (profile?.monthlyFixedExpenses ?? 0.0) +
+        ((profile?.monthlyVariableExpenses ?? 0.0) * 0.5) +
+        (profile?.existingLoanEmi ?? 0.0);
+
+    final emergencyMonths =
+        essential > 0 ? (savings / essential) : (savings > 0 ? 6.0 : 0.0);
+    final savingsRate = (profile?.monthlyIncome ?? 0.0) > 0
+        ? (surplus / profile!.monthlyIncome * 100.0).clamp(0.0, 100.0)
+        : 0.0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.pagePaddingH,
+        vertical: AppDimensions.space16,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Current Financial Snapshot Card
+              _buildFinancialSnapshotCard(
+                isDark,
+                surplus: surplus,
+                savings: savings,
+                emergencyMonths: emergencyMonths,
+                savingsRate: savingsRate,
+              ),
+              const SizedBox(height: AppDimensions.space20),
+
+              // 2. Money Simulator Card
+              _buildSimulatorCard(isDark, surplus: surplus),
+              const SizedBox(height: AppDimensions.space20),
+
+              // 3. What-If Scenario Card
+              _buildWhatIfCard(isDark, surplus: surplus),
+              const SizedBox(height: AppDimensions.space20),
+
+              // 4. Sourced Matching Investment Options
+              _buildMatchingOptionsCard(isDark),
+              const SizedBox(height: AppDimensions.space20),
+
+              // 5. Ask Pennora (AI Financial Chatbot)
+              _buildChatbotCard(isDark),
+              const SizedBox(height: AppDimensions.space32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── 1. Financial Snapshot ──────────────────────────────────────────────────
+
+  Widget _buildFinancialSnapshotCard(
+    bool isDark, {
+    required double surplus,
+    required double savings,
+    required double emergencyMonths,
+    required double savingsRate,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 0 : 4),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.lightLavender,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Financial Snapshot',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    Text(
+                      'Live baseline powering deterministic simulations',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'VERIFIED STATE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.space16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  isDark,
+                  label: 'Monthly Surplus',
+                  value: _fmt(surplus),
+                  subtext: 'Available for goals',
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricTile(
+                  isDark,
+                  label: 'Emergency Fund',
+                  value: '${emergencyMonths.toStringAsFixed(1)} mo',
+                  subtext: emergencyMonths >= 3 ? 'Safe buffer' : 'Buffer needed',
+                  color: emergencyMonths >= 3
+                      ? AppColors.success
+                      : AppColors.warning,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricTile(
+                  isDark,
+                  label: 'Savings Rate',
+                  value: '${savingsRate.toStringAsFixed(0)}%',
+                  subtext: 'Of total income',
+                  color: AppColors.secondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile(
+    bool isDark, {
+    required String label,
+    required String value,
+    required String subtext,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtext,
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 2. Money Simulator ─────────────────────────────────────────────────────
+
+  Widget _buildSimulatorCard(bool isDark, {required double surplus}) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.lightLavender,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.trending_up_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Money Simulator',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    Text(
+                      'Deterministic projection across lump-sum and recurring SIP',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isLoadingSim)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.space16),
+
+          // Sliders
+          _buildSliderRow(
+            isDark,
+            label: 'Initial Lump-Sum Investment',
+            valueText: _fmt(_principal),
+            min: 0,
+            max: 500000,
+            divisions: 50,
+            value: _principal,
+            onChanged: (v) {
+              setState(() => _principal = v);
+              _loadSim();
+            },
+          ),
+          const SizedBox(height: 10),
+          _buildSliderRow(
+            isDark,
+            label: 'Monthly SIP Commitment',
+            valueText: '${_fmt(_monthlySip)}/mo',
+            min: 500,
+            max: 100000,
+            divisions: 99,
+            value: _monthlySip,
+            onChanged: (v) {
+              setState(() => _monthlySip = v);
+              _loadSim();
+            },
+          ),
+          const SizedBox(height: 10),
+          _buildSliderRow(
+            isDark,
+            label: 'Investment Duration',
+            valueText: '${_durationYears.toStringAsFixed(0)} Years',
+            min: 1,
+            max: 30,
+            divisions: 29,
+            value: _durationYears,
+            onChanged: (v) {
+              setState(() => _durationYears = v);
+              _loadSim();
+            },
+          ),
+          const SizedBox(height: AppDimensions.space16),
+
+          // Results Preview Box
+          if (_simOutput != null) ...[
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.space16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Principal Invested',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _fmt(_simOutput!.totalInvested),
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Top Projected Value',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _simOutput!.projections.isNotEmpty
+                                ? _fmt(_simOutput!.projections.first.estimatedFutureValue)
+                                : '—',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (_simOutput!.hasLiquidityWarning) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withAlpha(20),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded,
+                              size: 16, color: AppColors.warning),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _simOutput!.warnings.isNotEmpty
+                                  ? _simOutput!.warnings.first
+                                  : 'Liquidity warning: Ensure essential emergency reserves are kept safe.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.warning,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderRow(
+    bool isDark, {
+    required String label,
+    required String valueText,
+    required double min,
+    required double max,
+    required int divisions,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            Text(
+              valueText,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: AppColors.primary,
+            inactiveTrackColor: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+            thumbColor: AppColors.primary,
+            trackHeight: 3,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+          ),
+          child: Slider(
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            divisions: divisions,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── 3. What-If Scenario ────────────────────────────────────────────────────
+
+  Widget _buildWhatIfCard(bool isDark, {required double surplus}) {
+    final adjSurplus = math.max(0.0, surplus + _customDelta);
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.lightLavender,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'What-If Scenario Modeler',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    Text(
+                      'Test changes to monthly surplus on investment growth and goal feasibility',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.space16),
+          Text(
+            'Adjust Monthly Surplus: ${_customDelta >= 0 ? '+' : ''}${_fmt(_customDelta)}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _customDelta >= 0 ? AppColors.success : AppColors.warning,
+            ),
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor:
+                  _customDelta >= 0 ? AppColors.success : AppColors.warning,
+              inactiveTrackColor: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+              thumbColor:
+                  _customDelta >= 0 ? AppColors.success : AppColors.warning,
+              trackHeight: 3,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            ),
+            child: Slider(
+              value: _customDelta,
+              min: -10000,
+              max: 10000,
+              divisions: 20,
+              onChanged: (v) => setState(() => _customDelta = v),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Surplus',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    Text(
+                      _fmt(surplus),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+                const Icon(Icons.arrow_forward_rounded, size: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Simulated Surplus',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    Text(
+                      _fmt(adjSurplus),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _customDelta >= 0
+                            ? AppColors.success
+                            : AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 4. Sourced Matching Options ────────────────────────────────────────────
+
+  Widget _buildMatchingOptionsCard(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.lightLavender,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.verified_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Matching Investment Options',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    Text(
+                      'Filtered & ranked deterministically from AMFI, NSE, SBI, and MoF',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isLoadingOptions)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.space16),
+
+          if (_eligibleOptions.isEmpty && !_isLoadingOptions)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Options are being evaluated based on your latest financial commitments.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            )
+          else
+            ..._eligibleOptions.map((opt) => _buildOptionRow(isDark, opt)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionRow(bool isDark, MatchingInvestmentOption opt) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      opt.productName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${opt.provider} • Sourced from ${opt.source}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  opt.rateOrNavText,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            opt.whyItMatches,
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.4,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(isDark ? 30 : 10),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Risk: ${opt.riskLevel}',
+                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(isDark ? 30 : 10),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Liquidity: ${opt.liquidity}',
+                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'Min: ₹${opt.minimumInvestment.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 5. Ask Pennora (AI Chatbot) ────────────────────────────────────────────
+
+  Widget _buildChatbotCard(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(AppDimensions.space16),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightLavender,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ask Pennora Copilot',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                      ),
+                      Text(
+                        'Conversational explanations backed by strictly verified context',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withAlpha(20),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'LLAMA 3.2',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Suggestion Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                _buildPromptChip("What if I invest ₹5,000 monthly?", isDark),
+                _buildPromptChip("Why did you show this option?", isDark),
+                _buildPromptChip("Which option has lower risk?", isDark),
+                _buildPromptChip("What if my surplus decreases by ₹2,000?", isDark),
+                _buildPromptChip("Explain this result simply.", isDark),
+              ],
+            ),
+          ),
+
+          // Chat Messages Box
+          Container(
+            height: 280,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            color: isDark ? AppColors.darkBackground : const Color(0xFFFAFAFA),
+            child: ListView.builder(
+              controller: _chatScrollController,
+              itemCount: _chatMessages.length,
+              itemBuilder: (context, idx) {
+                final msg = _chatMessages[idx];
+                return _buildMessageBubble(isDark, msg);
+              },
+            ),
+          ),
+
+          if (_isChatLoading)
+            LinearProgressIndicator(
+              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              minHeight: 2,
+            ),
+
+          // Text Input Bar
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Ask about your savings, options, or simulation...',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide(
+                          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceVariant
+                          : const Color(0xFFF8FAFC),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _isChatLoading ? null : () => _sendMessage(),
+                  icon: const Icon(Icons.send_rounded),
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromptChip(String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ActionChip(
+        label: Text(text, style: const TextStyle(fontSize: 11)),
+        backgroundColor:
+            isDark ? AppColors.darkSurfaceVariant : const Color(0xFFEEF2FF),
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white70 : AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        side: BorderSide(
+          color: isDark ? AppColors.navyBorder : AppColors.primary.withAlpha(40),
+        ),
+        onPressed: () => _sendMessage(text),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(bool isDark, _ChatMessage msg) {
+    return Align(
+      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: const BoxConstraints(maxWidth: 580),
+        decoration: BoxDecoration(
+          color: msg.isUser
+              ? AppColors.primary
+              : (isDark ? AppColors.darkSurface : Colors.white),
+          borderRadius: BorderRadius.circular(14),
+          border: msg.isUser
+              ? null
+              : Border.all(
+                  color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(isDark ? 0 : 3),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment:
+              msg.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Text(
+              msg.text,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.45,
+                color: msg.isUser
+                    ? Colors.white
+                    : (isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight),
+              ),
+            ),
+            if (!msg.isUser && msg.source != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.shield_outlined,
+                      size: 10, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Verified Context',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 2: MULTI-AGENT PIPELINE (PRESERVED LANGGRAPH RESULTS)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildPipelineView(bool isDark, AiInsightsService svc) {
+    if (!svc.hasInsight) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.space24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.hub_outlined, size: 48, color: AppColors.primary),
+              const SizedBox(height: 16),
+              Text(
+                'No Transaction Analysis Yet',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'As SMS or manual transactions are recorded, the 6-agent LangGraph pipeline processes them and surfaces automated insights here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final insight = svc.latestInsight!;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.pagePaddingH,
+        vertical: AppDimensions.space16,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Pipeline Status Card
+              _buildPipelineStatusCard(insight, isDark),
+              const SizedBox(height: AppDimensions.space16),
+
+              // Headline Card
+              _buildHeadlineCard(insight, isDark),
+              const SizedBox(height: AppDimensions.space16),
+
+              // Financial State
+              if (insight.financialState != null)
+                _buildFinancialStateCard(insight, isDark),
+              if (insight.financialState != null)
+                const SizedBox(height: AppDimensions.space16),
+
+              // Goal Impact
+              if (insight.goals != null && insight.goals!.isNotEmpty)
+                _buildGoalImpactCard(insight, isDark),
+              if (insight.goals != null && insight.goals!.isNotEmpty)
+                const SizedBox(height: AppDimensions.space16),
+
+              // Conflicts
+              _buildConflictCard(insight, isDark),
+              const SizedBox(height: AppDimensions.space16),
+
+              // Scenarios
+              if (insight.hasScenarios) _buildScenariosCard(insight, isDark),
+              const SizedBox(height: AppDimensions.space24),
+
+              // History
+              _buildHistorySection(svc.history, isDark),
+              const SizedBox(height: AppDimensions.space32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Existing Pipeline Cards ────────────────────────────────────────────────
+
+  Widget _buildPipelineStatusCard(PipelineInsight insight, bool isDark) {
+    const allAgents = [
+      ('transaction_agent', 'Transaction Agent', AppColors.primary),
+      ('financial_state_agent', 'Financial State Agent', AppColors.success),
+      ('goal_agent', 'Goal Agent', Color(0xFF64B5F6)),
+      ('conflict_agent', 'Conflict Agent', AppColors.warning),
+      ('scenario_agent', 'Scenario Agent', Color(0xFFBA68C8)),
+      ('explanation_agent', 'Explanation Agent', AppColors.secondary),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'PIPELINE EXECUTION STATUS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...allAgents.map((agent) {
+            final isDone = insight.completedStages.contains(agent.$1);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    isDone
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked,
+                    size: 14,
+                    color: isDone ? agent.$3 : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    agent.$2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isDone ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (isDone)
+                    Text(
+                      'COMPLETE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: agent.$3,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeadlineCard(PipelineInsight insight, bool isDark) {
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: AppColors.electricCyan,
-      headerTag: 'AI ANALYSIS',
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             insight.headline,
             style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
@@ -359,7 +1599,7 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
             Text(
               insight.summary,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 height: 1.5,
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -372,319 +1612,204 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
     );
   }
 
-  // ── Financial State Card ────────────────────────────────────────────────
-
   Widget _buildFinancialStateCard(PipelineInsight insight, bool isDark) {
     final fs = insight.financialState!;
-    final status = insight.financialStatus;
-    final cfStatus = insight.cashFlowStatus;
-    final statusColor = _statusColor(status);
-    final cfColor = _cashFlowColor(cfStatus);
-
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: AppColors.mint,
-      headerTag: 'FINANCIAL STATE AGENT',
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _StatusBadge(label: status, color: statusColor),
-              const SizedBox(width: 8),
-              _StatusBadge(label: cfStatus, color: cfColor),
-            ],
+          Text(
+            'FINANCIAL STATE INSIGHT',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
           ),
-          const SizedBox(height: AppDimensions.space12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (fs['monthly_income'] != null)
-                _FinTile(
-                  label: 'Income',
-                  value: _fmtAmount(fs['monthly_income']),
-                  color: AppColors.mint,
-                ),
-              if (fs['monthly_expenses'] != null)
-                _FinTile(
-                  label: 'Expenses',
-                  value: _fmtAmount(fs['monthly_expenses']),
-                  color: AppColors.error,
-                ),
-              if (fs['monthly_surplus'] != null)
-                _FinTile(
-                  label: 'Surplus',
-                  value: _fmtAmount(fs['monthly_surplus']),
-                  color: AppColors.electricCyan,
-                ),
-              if (fs['savings_rate'] != null)
-                _FinTile(
-                  label: 'Savings %',
-                  value: '${(fs['savings_rate'] as num).toStringAsFixed(1)}%',
-                  color: const Color(0xFF64B5F6),
-                ),
-            ],
+          const SizedBox(height: 10),
+          Text(
+            fs['recommendation']?.toString() ??
+                'Financial parameters updated from recent transactions.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.4,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
           ),
-          if (fs['recommendation'] != null) ...[
-            const SizedBox(height: AppDimensions.space12),
-            _QuoteBox(text: fs['recommendation'].toString(), isDark: isDark),
-          ],
         ],
       ),
     );
   }
 
-  // ── Goal Impact Card ────────────────────────────────────────────────────
-
   Widget _buildGoalImpactCard(PipelineInsight insight, bool isDark) {
     final goals = insight.goals!;
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: const Color(0xFF64B5F6),
-      headerTag: 'GOAL AGENT',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: goals.take(3).map((g) {
-          final name = (g['goal_name'] as String?) ?? 'Goal';
-          final goalStatus = (g['goal_status'] as String?) ?? '';
-          final color = _goalStatusColor(goalStatus);
-          final score = (g['feasibility_score'] as num?)?.toDouble();
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (score != null) ...[
-                        const SizedBox(height: 4),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (score / 100.0).clamp(0.0, 1.0),
-                            backgroundColor:
-                                isDark ? AppColors.navyMid : const Color(0xFFE8EEF4),
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                            minHeight: 4,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _StatusBadge(label: goalStatus, color: color),
-              ],
-            ),
-          );
-        }).toList(),
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
       ),
-    );
-  }
-
-  // ── Conflict Card ───────────────────────────────────────────────────────
-
-  Widget _buildConflictCard(PipelineInsight insight, bool isDark) {
-    final hasConflict = insight.hasConflict;
-    final conflicts = insight.conflicts;
-
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: hasConflict ? AppColors.warning : AppColors.mint,
-      headerTag: 'CONFLICT AGENT',
-      child: hasConflict && conflicts.isNotEmpty
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        size: 16, color: AppColors.warning),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${conflicts.length} Conflict${conflicts.length == 1 ? '' : 's'} Detected',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.warning,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.space12),
-                ...conflicts.take(3).map(
-                      (c) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _QuoteBox(
-                          text: (c['description'] as String?) ??
-                              (c['message'] as String?) ??
-                              c.toString(),
-                          isDark: isDark,
-                          color: AppColors.warning,
-                        ),
-                      ),
-                    ),
-              ],
-            )
-          : Row(
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    size: 16, color: AppColors.mint),
-                const SizedBox(width: 8),
-                Text(
-                  'No conflicts detected — your goals align.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  // ── Scenarios Card ──────────────────────────────────────────────────────
-
-  Widget _buildScenariosCard(PipelineInsight insight, bool isDark) {
-    final scenarios = insight.scenarios;
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: const Color(0xFFBA68C8),
-      headerTag: 'SCENARIO AGENT',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: scenarios.take(2).map((s) {
-          final title = (s['scenario_name'] as String?) ??
-              (s['title'] as String?) ??
-              'Scenario';
-          final desc = (s['description'] as String?) ?? '';
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFBA68C8),
+        children: [
+          Text(
+            'GOAL IMPACT EVALUATION',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...goals.take(3).map((g) {
+            final name = (g['goal_name'] as String?) ?? 'Goal';
+            final status = (g['goal_status'] as String?) ?? 'On Track';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                   ),
-                ),
-                if (desc.isNotEmpty) ...[
-                  const SizedBox(height: 4),
                   Text(
-                    desc,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                    status,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
-              ],
-            ),
-          );
-        }).toList(),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  // ── Pipeline Status Card ────────────────────────────────────────────────
+  Widget _buildConflictCard(PipelineInsight insight, bool isDark) {
+    final hasConflict = insight.hasConflict;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasConflict ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
+            size: 18,
+            color: hasConflict ? AppColors.warning : AppColors.success,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              hasConflict
+                  ? 'Goal conflict identified from recent cashflow run-rate.'
+                  : 'No goal conflicts detected across active deadlines.',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildPipelineStatusCard(PipelineInsight insight, bool isDark) {
-    const allAgents = [
-      ('transaction_agent', 'Transaction Agent', AppColors.electricCyan),
-      ('financial_state_agent', 'Financial State Agent', AppColors.mint),
-      ('goal_agent', 'Goal Agent', Color(0xFF64B5F6)),
-      ('conflict_agent', 'Conflict Agent', AppColors.warning),
-      ('scenario_agent', 'Scenario Agent', Color(0xFFBA68C8)),
-      ('explanation_agent', 'Explanation Agent', AppColors.electricCyan),
-    ];
-
-    return _InsightCard(
-      isDark: isDark,
-      accentColor: AppColors.electricCyan,
-      headerTag: 'PIPELINE EXECUTION',
+  Widget _buildScenariosCard(PipelineInsight insight, bool isDark) {
+    final scenarios = insight.scenarios;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
       child: Column(
-        children: allAgents.map((agent) {
-          final isComplete = insight.completedStages.contains(agent.$1);
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(
-                  isComplete
-                      ? Icons.check_circle_rounded
-                      : Icons.radio_button_unchecked,
-                  size: 14,
-                  color: isComplete ? agent.$3 : (isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  agent.$2,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isComplete ? FontWeight.w700 : FontWeight.w400,
-                    color: isComplete
-                        ? (isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight)
-                        : (isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight),
-                  ),
-                ),
-                const Spacer(),
-                if (isComplete)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: agent.$3.withAlpha(25),
-                      borderRadius: BorderRadius.circular(4),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AGENT SCENARIO PROJECTIONS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...scenarios.take(2).map((s) {
+            final title = (s['scenario_name'] as String?) ?? 'Scenario';
+            final desc = (s['description'] as String?) ?? '';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
-                    child: Text(
-                      'DONE',
+                  ),
+                  if (desc.isNotEmpty)
+                    Text(
+                      desc,
                       style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: agent.$3,
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
                       ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        }).toList(),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  // ── History Section ─────────────────────────────────────────────────────
-
-  Widget _buildHistorySection(
-      List<InsightHistoryItem> history, bool isDark) {
+  Widget _buildHistorySection(List<InsightHistoryItem> history, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -693,54 +1818,27 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            letterSpacing: 1.0,
+            letterSpacing: 0.8,
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
           ),
         ),
-        const SizedBox(height: AppDimensions.space12),
+        const SizedBox(height: 10),
         if (history.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.space16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              border: Border.all(
-                  color: isDark
-                      ? AppColors.navyBorder
-                      : const Color(0xFFD6E4F0)),
-            ),
-            child: Text(
-              'No analysis history yet.',
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+          Text(
+            'No prior transaction pipeline runs recorded.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
             ),
           )
         else
-          Column(
-            children: history.map((item) {
-              final color =
-                  item.isProcessed ? AppColors.mint : AppColors.error;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(AppDimensions.space12),
-                  decoration: BoxDecoration(
-                    color:
-                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                    borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.navyBorder
-                          : const Color(0xFFD6E4F0),
-                    ),
-                  ),
+          ...history.take(5).map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
                     children: [
                       Icon(
@@ -748,357 +1846,40 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
                             ? Icons.check_circle_rounded
                             : Icons.error_outline_rounded,
                         size: 14,
-                        color: color,
+                        color: item.isProcessed
+                            ? AppColors.success
+                            : AppColors.error,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.headline ??
-                                  (item.isProcessed ? 'Analysis complete' : 'Processing failed'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (item.processedAt != null)
-                              Text(
-                                _formatTime(item.processedAt!),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isDark
-                                      ? AppColors.textTertiaryDark
-                                      : AppColors.textTertiaryLight,
-                                ),
-                              ),
-                          ],
+                        child: Text(
+                          item.headline ?? 'Pipeline execution complete',
+                          style: const TextStyle(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      _StatusBadge(label: item.status, color: color),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
-          ),
+              ),
       ],
     );
   }
-
-  // ── Error state ─────────────────────────────────────────────────────────
-
-  Widget _buildErrorState(
-      String error, bool isDark, AiInsightsService svc) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.space32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_off_rounded,
-                size: 48,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight),
-            const SizedBox(height: AppDimensions.space16),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.space16),
-            ElevatedButton.icon(
-              onPressed: () => svc.refresh(force: true),
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.electricCyan,
-                foregroundColor: AppColors.deepNavy,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Utilities ───────────────────────────────────────────────────────────
-
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'STABLE':
-      case 'STRONG':
-        return AppColors.mint;
-      case 'MODERATE':
-        return AppColors.warning;
-      case 'AT_RISK':
-      case 'CRITICAL':
-        return AppColors.error;
-      default:
-        return AppColors.electricCyan;
-    }
-  }
-
-  Color _cashFlowColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'POSITIVE':
-        return AppColors.mint;
-      case 'NEUTRAL':
-        return AppColors.electricCyan;
-      case 'NEGATIVE':
-        return AppColors.error;
-      default:
-        return AppColors.electricCyan;
-    }
-  }
-
-  Color _goalStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'ON_TRACK':
-      case 'AHEAD':
-        return AppColors.mint;
-      case 'AT_RISK':
-      case 'BEHIND':
-        return AppColors.warning;
-      case 'INFEASIBLE':
-        return AppColors.error;
-      default:
-        return AppColors.electricCyan;
-    }
-  }
-
-  String _fmtAmount(dynamic value) {
-    if (value == null) return '—';
-    final v = (value as num).toDouble();
-    if (v >= 10000000) return '₹${(v / 10000000).toStringAsFixed(2)}Cr';
-    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)}L';
-    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
-    return '₹${v.toStringAsFixed(0)}';
-  }
-
-  String _formatTime(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable widgets
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _InsightCard extends StatelessWidget {
-  final bool isDark;
-  final Color accentColor;
-  final String headerTag;
-  final Widget child;
-
-  const _InsightCard({
-    required this.isDark,
-    required this.accentColor,
-    required this.headerTag,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.space18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.navyBorder.withAlpha(120) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withAlpha(35)
-                : const Color(0xFF0F172A).withAlpha(8),
-            blurRadius: 14,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 5,
-                height: 5,
-                decoration:
-                    BoxDecoration(shape: BoxShape.circle, color: accentColor),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                headerTag,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                  color: accentColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.space12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _StatusBadge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withAlpha(60)),
-      ),
-      child: Text(
-        label.replaceAll('_', ' '),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _FinTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _FinTile(
-      {required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withAlpha(18),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(45)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 9,
-                color: color.withAlpha(180)),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuoteBox extends StatelessWidget {
+class _ChatMessage {
   final String text;
-  final bool isDark;
-  final Color color;
+  final bool isUser;
+  final String? source;
+  final List<dynamic>? relevantCards;
+  final DateTime timestamp;
 
-  const _QuoteBox({
+  _ChatMessage({
     required this.text,
-    required this.isDark,
-    this.color = AppColors.electricCyan,
+    required this.isUser,
+    this.source,
+    this.relevantCards,
+    required this.timestamp,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withAlpha(18),
-        borderRadius: BorderRadius.circular(8),
-        border: Border(left: BorderSide(color: color, width: 3)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          height: 1.5,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _AgentChip extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _AgentChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(60)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.smart_toy_outlined, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

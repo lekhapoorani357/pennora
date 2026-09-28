@@ -43,6 +43,12 @@ from app.models import (
     PartnerProduct,
     InvestmentProduct,
     InvestmentScenario,
+    Plan,
+    Payment,
+    Household,
+    HouseholdMember,
+    HouseholdInvitation,
+    FinancialReport,
 )
 
 
@@ -79,6 +85,12 @@ COLLECTION_MODEL_MAP = {
     "partner_products": PartnerProduct,
     "investment_products": InvestmentProduct,
     "investment_scenarios": InvestmentScenario,
+    "plans": Plan,
+    "payments": Payment,
+    "households": Household,
+    "household_members": HouseholdMember,
+    "household_invitations": HouseholdInvitation,
+    "financial_reports": FinancialReport,
 }
 
 _engine: Optional[Engine] = None
@@ -168,26 +180,29 @@ def init_db(engine: Optional[Engine] = None) -> None:
     eng = engine or get_engine()
     Base.metadata.create_all(bind=eng)
 
-    # Auto-migrate any missing columns on existing SQLite tables
-    if eng.dialect.name == "sqlite":
-        from sqlalchemy import inspect
-        inspector = inspect(eng)
-        with eng.connect() as conn:
-            for table_name, table in Base.metadata.tables.items():
-                if inspector.has_table(table_name):
-                    existing_cols = {col["name"] for col in inspector.get_columns(table_name)}
-                    for col in table.columns:
-                        if col.name not in existing_cols:
-                            col_type = col.type.compile(eng.dialect)
-                            default_clause = ""
-                            if col.default is not None and hasattr(col.default, "arg") and not callable(col.default.arg):
-                                default_clause = f" DEFAULT '{col.default.arg}'"
+    # Auto-migrate any missing columns on existing tables (PostgreSQL and SQLite)
+    from sqlalchemy import inspect
+    inspector = inspect(eng)
+    with eng.connect() as conn:
+        for table_name, table in Base.metadata.tables.items():
+            if inspector.has_table(table_name):
+                existing_cols = {col["name"] for col in inspector.get_columns(table_name)}
+                for col in table.columns:
+                    if col.name not in existing_cols:
+                        col_type = col.type.compile(eng.dialect)
+                        default_clause = ""
+                        if col.default is not None and hasattr(col.default, "arg") and not callable(col.default.arg):
+                            default_clause = f" DEFAULT '{col.default.arg}'"
+                        if eng.dialect.name == "postgresql":
+                            alter_stmt = f'ALTER TABLE "{table_name}" ADD COLUMN IF NOT EXISTS "{col.name}" {col_type}{default_clause}'
+                        else:
                             alter_stmt = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type}{default_clause}"
-                            try:
-                                conn.execute(text(alter_stmt))
-                                conn.commit()
-                            except Exception:
-                                pass
+                        try:
+                            conn.execute(text(alter_stmt))
+                            conn.commit()
+                        except Exception:
+                            pass
+
 
 
 # Backward compatibility alias for app.main lifespan

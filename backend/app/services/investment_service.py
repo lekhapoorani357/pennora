@@ -177,6 +177,14 @@ class InvestmentSimulationResponse(BaseModel):
 class InvestmentService:
     @staticmethod
     def get_products(category: Optional[str] = None) -> List[Dict[str, Any]]:
+        try:
+            from app.adapters.investment_data.ingestion_service import get_investment_ingestion_service
+            prods = get_investment_ingestion_service().get_all_products(category)
+            if prods:
+                return prods
+        except Exception:
+            pass
+
         if not category or category.upper() == "ALL":
             return DEFAULT_INVESTMENT_PRODUCTS
         cat = category.strip().upper()
@@ -203,13 +211,19 @@ class InvestmentService:
         )
 
         for prod in products:
+            annual_max = float(prod.get("assumedAnnualRateMax") or 7.0)
+            def_rate = float(prod.get("defaultRate") or annual_max)
+            if def_rate > 35.0:
+                def_rate = annual_max if annual_max <= 35.0 else 7.0
             rate = (
                 req.customAnnualRate
                 if req.customAnnualRate is not None
-                else prod["defaultRate"]
+                else def_rate
             )
-            rate_min = prod["assumedAnnualRateMin"]
-            rate_max = prod["assumedAnnualRateMax"]
+            rate_min = float(prod.get("assumedAnnualRateMin", 6.0))
+
+            rate_max = float(prod.get("assumedAnnualRateMax", 8.0))
+            is_guar = bool(prod.get("isGuaranteed", False))
 
             # Expected projection
             fv_lump = calculate_lump_sum(principal, rate, years)
@@ -220,7 +234,7 @@ class InvestmentService:
             # Ranges for market-linked products
             conservative_val = None
             optimistic_val = None
-            if not prod["isGuaranteed"]:
+            if not is_guar:
                 c_lump = calculate_lump_sum(principal, rate_min, years)
                 c_sip = calculate_sip(monthly, rate_min, months)
                 conservative_val = round(c_lump + c_sip, 2)
@@ -237,12 +251,12 @@ class InvestmentService:
 
             projections.append(
                 ProductProjection(
-                    productId=prod["id"],
-                    productName=prod["name"],
-                    category=prod["category"],
-                    isGuaranteed=prod["isGuaranteed"],
-                    risk=prod["risk"],
-                    liquidity=prod["liquidity"],
+                    productId=str(prod.get("id") or prod.get("_id") or ""),
+                    productName=str(prod.get("name") or prod.get("product_name") or "Investment"),
+                    category=str(prod.get("category") or prod.get("product_type") or "FD"),
+                    isGuaranteed=is_guar,
+                    risk=str(prod.get("risk") or prod.get("risk_level") or "Moderate"),
+                    liquidity=str(prod.get("liquidity") or "Moderate"),
                     assumedAnnualRate=round(rate, 2),
                     rateRangeText=rate_range,
                     totalInvested=round(total_invested, 2),
@@ -252,9 +266,10 @@ class InvestmentService:
                     optimisticValue=optimistic_val,
                     taxNotes=prod.get("taxNotes"),
                     disclaimer=disclaimer_text,
-                    source=prod.get("source", "Illustrative assumptions for demonstration"),
+                    source=str(prod.get("source_name") or prod.get("source") or "Official Sourced Entity"),
                 )
             )
+
 
         # -------------------------------------------------------------
         # Part 12: Goal Impact Evaluation Before Investment

@@ -11,6 +11,12 @@ from app.models.analytics_event import AnalyticsEvent
 from app.models.partner_product import PartnerProduct
 from app.models.investment_product import InvestmentProduct
 from app.models.investment_scenario import InvestmentScenario
+from app.models.plan import Plan
+from app.models.payment import Payment
+from app.models.household import Household
+from app.models.household_member import HouseholdMember
+from app.models.household_invitation import HouseholdInvitation
+from app.models.report import FinancialReport
 
 __all__ = [
     "Base",
@@ -28,4 +34,10 @@ __all__ = [
     "PartnerProduct",
     "InvestmentProduct",
     "InvestmentScenario",
+    "Plan",
+    "Payment",
+    "Household",
+    "HouseholdMember",
+    "HouseholdInvitation",
+    "FinancialReport",
 ]

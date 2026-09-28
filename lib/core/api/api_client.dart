@@ -134,6 +134,26 @@ class ApiClient {
     );
   }
 
+  /// Perform a PATCH request.
+  Future<dynamic> patch(
+    String path, {
+    dynamic body,
+    Map<String, String>? headers,
+    bool requiresAuth = true,
+  }) async {
+    final encodedBody = body != null ? jsonEncode(body) : null;
+    return _send(
+      () => _httpClient.patch(
+        _buildUri(path),
+        headers: _buildHeaders(
+          customHeaders: headers,
+          requiresAuth: requiresAuth,
+        ),
+        body: encodedBody,
+      ),
+    );
+  }
+
   /// Perform a DELETE request.
   Future<dynamic> delete(
     String path, {
