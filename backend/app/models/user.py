@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, Boolean, DateTime
 from app.models.base import Base, generate_id, utc_now
 
 
@@ -11,6 +11,8 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     passwordHash = Column(String(255), nullable=False)
     deviceId = Column(String(255), index=True, nullable=True)
+    role = Column(String(50), default="user", nullable=False)
+    isAdmin = Column(Boolean, default=False, nullable=False)
     createdAt = Column(DateTime, default=utc_now, nullable=False)
     updatedAt = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
@@ -30,6 +32,8 @@ class User(Base):
             "email": self.email,
             "passwordHash": self.passwordHash,
             "deviceId": self.deviceId,
+            "role": self.role,
+            "isAdmin": self.isAdmin,
             "createdAt": self.createdAt,
             "updatedAt": self.updatedAt,
         }

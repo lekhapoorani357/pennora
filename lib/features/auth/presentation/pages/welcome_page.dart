@@ -237,7 +237,7 @@ class _WelcomePageState extends State<WelcomePage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'GoalSync',
+              'Pennora',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -301,7 +301,7 @@ class _WelcomePageState extends State<WelcomePage>
 
   Widget _buildDescription(bool isDark) {
     return Text(
-      'GoalSync continuously understands your financial activity, '
+      'Pennora continuously understands your financial activity, '
       'detects goal conflicts, and helps you explore what-if scenarios.',
       style: TextStyle(
         fontSize: 16,

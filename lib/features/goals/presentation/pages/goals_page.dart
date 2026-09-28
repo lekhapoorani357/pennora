@@ -90,7 +90,7 @@ class _GoalsPageState extends State<GoalsPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'GoalSync tracks your progress and adapts goals as your financial conditions change.',
+                              'Pennora tracks your progress and adapts goals as your financial conditions change.',
                               style: TextStyle(
                                 fontSize: 13,
                                 height: 1.4,
@@ -219,7 +219,7 @@ class _EmptyGoalsState extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.space12),
         Text(
-          "Goals are the foundation of GoalSync's financial conflict analysis. Create your first goal so the system can begin tracking your progress and detecting future conflicts.",
+          "Goals are the foundation of Pennora's financial conflict analysis. Create your first goal so the system can begin tracking your progress and detecting future conflicts.",
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,

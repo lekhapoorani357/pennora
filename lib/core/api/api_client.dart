@@ -161,7 +161,7 @@ class ApiClient {
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException.networkError(
-        'Unable to connect to GoalSync server. Please check your internet connection.',
+        'Unable to connect to Pennora server. Please check your internet connection.',
       );
     }
 

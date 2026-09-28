@@ -37,6 +37,12 @@ from app.models import (
     Transaction,
     TransactionProcessingRecord,
     DeviceMapping,
+    Subscription,
+    RevenueEvent,
+    AnalyticsEvent,
+    PartnerProduct,
+    InvestmentProduct,
+    InvestmentScenario,
 )
 
 
@@ -67,6 +73,12 @@ COLLECTION_MODEL_MAP = {
     "transactions": Transaction,
     "transaction_processing_records": TransactionProcessingRecord,
     "device_mappings": DeviceMapping,
+    "subscriptions": Subscription,
+    "revenue_events": RevenueEvent,
+    "analytics_events": AnalyticsEvent,
+    "partner_products": PartnerProduct,
+    "investment_products": InvestmentProduct,
+    "investment_scenarios": InvestmentScenario,
 }
 
 _engine: Optional[Engine] = None

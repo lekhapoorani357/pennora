@@ -193,7 +193,7 @@ class StepReview extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Your financial baseline is securely persisted locally on your device. '
-                    'GoalSync never shares your sensitive details.',
+                    'Pennora never shares your sensitive details.',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark

@@ -367,7 +367,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'GoalSync',
+                  'Pennora',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,

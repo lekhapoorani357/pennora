@@ -2,7 +2,21 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_database, init_db
-from app.routes import auth, users, financial_profiles, goals, transactions, pipeline, insights
+from app.routes import (
+    auth,
+    users,
+    financial_profiles,
+    goals,
+    transactions,
+    pipeline,
+    insights,
+    investments,
+    subscriptions,
+    ads,
+    partners,
+    analytics,
+    admin,
+)
 
 
 @asynccontextmanager
@@ -17,9 +31,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="GoalSync Backend API",
-    description="FastAPI REST API connected to local SQLite for GoalSync mobile application.",
-    version="1.0.0",
+    title="Pennora Backend API",
+    description="FastAPI REST API connected to local SQLite for Pennora financial intelligence platform.",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -40,6 +54,12 @@ app.include_router(goals.router)
 app.include_router(transactions.router)
 app.include_router(pipeline.router)
 app.include_router(insights.router)
+app.include_router(investments.router)
+app.include_router(subscriptions.router)
+app.include_router(ads.router)
+app.include_router(partners.router)
+app.include_router(analytics.router)
+app.include_router(admin.router)
 
 
 @app.get("/health", tags=["Health"])

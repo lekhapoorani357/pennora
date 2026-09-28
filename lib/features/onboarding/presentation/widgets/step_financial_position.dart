@@ -55,7 +55,7 @@ class StepFinancialPosition extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.space6),
           Text(
-            'These balances help GoalSync monitor safety buffers, determine debt load, and identify conflicts.',
+            'These balances help Pennora monitor safety buffers, determine debt load, and identify conflicts.',
             style: TextStyle(
               fontSize: 13,
               color: isDark

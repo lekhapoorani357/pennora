@@ -263,7 +263,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         const SizedBox(width: AppDimensions.space10),
                         Text(
-                          'GoalSync',
+                          'Pennora',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,

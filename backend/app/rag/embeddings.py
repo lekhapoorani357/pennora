@@ -1,34 +1,77 @@
 """Embedding generation module using SentenceTransformer all-MiniLM-L6-v2."""
 
+import hashlib
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 import numpy as np
 
 # Remove SSLKEYLOGFILE if set by external network tools (e.g. Wireshark) to prevent permission errors
 os.environ.pop("SSLKEYLOGFILE", None)
 
-from sentence_transformers import SentenceTransformer  # noqa: E402
+try:
+    from sentence_transformers import SentenceTransformer  # noqa: E402
+except ImportError:
+    SentenceTransformer = None
+
 from .models import MerchantKnowledgeDocument  # noqa: E402
 
 DEFAULT_MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIMENSION = 384
 
 
+class _FallbackEmbeddingModel:
+    """Deterministic, lightweight 384-dim text embedder for environments without sentence-transformers."""
+
+    def encode(self, texts, normalize_embeddings: bool = True, show_progress_bar: bool = False):
+        is_single = isinstance(texts, str)
+        text_list = [texts] if is_single else list(texts)
+        results = []
+        for t in text_list:
+            clean = t.strip().lower()
+            tokens = clean.split()
+            vec = np.zeros(EMBEDDING_DIMENSION, dtype=np.float32)
+            # Bag of character n-grams and tokens hashed into 384 dimensions
+            features = list(tokens)
+            for tok in tokens:
+                for n in range(3, min(6, len(tok) + 1)):
+                    for i in range(len(tok) - n + 1):
+                        features.append(tok[i:i+n])
+            if not features:
+                features = ["empty"]
+            for f in features:
+                h = int(hashlib.md5(f.encode("utf-8")).hexdigest(), 16)
+                idx = h % EMBEDDING_DIMENSION
+                sign = 1.0 if ((h >> 9) & 1) else -1.0
+                vec[idx] += sign
+            norm = np.linalg.norm(vec)
+            if norm > 0 and normalize_embeddings:
+                vec = vec / norm
+            results.append(vec)
+        arr = np.array(results, dtype=np.float32)
+        return arr[0] if is_single else arr
+
+
 class EmbeddingGenerator:
     """Manages text embedding generation with L2 normalization."""
 
     _instance: Optional["EmbeddingGenerator"] = None
-    _shared_model: Optional[SentenceTransformer] = None
+    _shared_model: Optional[Any] = None
     _shared_model_name: Optional[str] = None
 
-    def __init__(self, model_name: str = DEFAULT_MODEL_NAME, model: Optional[SentenceTransformer] = None):
+    def __init__(self, model_name: str = DEFAULT_MODEL_NAME, model: Optional[Any] = None):
         self.model_name = model_name
         if model is not None:
             self._model = model
         elif EmbeddingGenerator._shared_model is not None and EmbeddingGenerator._shared_model_name == model_name:
             self._model = EmbeddingGenerator._shared_model
         else:
-            self._model = SentenceTransformer(model_name)
+            if SentenceTransformer is not None:
+                try:
+                    self._model = SentenceTransformer(model_name)
+                except Exception:
+                    self._model = _FallbackEmbeddingModel()
+            else:
+                self._model = _FallbackEmbeddingModel()
             EmbeddingGenerator._shared_model = self._model
             EmbeddingGenerator._shared_model_name = model_name
 

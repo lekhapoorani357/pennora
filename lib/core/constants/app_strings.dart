@@ -7,7 +7,7 @@ abstract final class AppStrings {
   // App Identity
   // ─────────────────────────────────────────────────────────────
 
-  static const String appName = 'GoalSync';
+  static const String appName = 'Pennora';
   static const String appTagline = 'AI-Powered Financial Intelligence';
   static const String appVersion = '1.0.0';
 

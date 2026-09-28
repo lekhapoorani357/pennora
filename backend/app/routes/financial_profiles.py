@@ -3,12 +3,63 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.database import get_collection
 from app.dependencies import get_current_user
 from app.schemas.financial_profile import (
+    RoleSelectionRequest,
     FinancialProfileCreate,
     FinancialProfileUpdate,
     FinancialProfileResponse,
 )
 
 router = APIRouter(prefix="/financial-profile", tags=["Financial Profile"])
+
+
+@router.post("/role", response_model=FinancialProfileResponse, summary="Select or update user's financial role")
+def set_financial_role(
+    payload: RoleSelectionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    valid_roles = ["student", "professional", "family"]
+    role = payload.role.strip().lower()
+    if role not in valid_roles:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Role must be one of {valid_roles}",
+        )
+
+    coll = get_collection("financial_profiles")
+    user_id = str(current_user["_id"])
+    now = datetime.now(timezone.utc)
+
+    existing = coll.find_one({"userId": user_id})
+    if existing:
+        coll.update_one({"_id": existing["_id"]}, {"$set": {"financialRole": role, "updatedAt": now}})
+        updated = coll.find_one({"_id": existing["_id"]})
+        updated["_id"] = str(updated["_id"])
+        updated["userId"] = str(updated["userId"])
+        return updated
+
+    default_occupation = "Student" if role == "student" else "Professional"
+    doc = {
+        "userId": user_id,
+        "financialRole": role,
+        "roleData": None,
+        "age": 20 if role == "student" else 28,
+        "occupation": default_occupation,
+        "dependents": 2 if role == "family" else 0,
+        "monthlyIncome": 0.0,
+        "incomeType": "Pocket Money/Stipend" if role == "student" else "Salary",
+        "additionalIncome": 0.0,
+        "currentSavings": 0.0,
+        "fixedExpenses": 0.0,
+        "variableExpenses": 0.0,
+        "monthlyEMI": 0.0,
+        "activeLoans": 0,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+    res = coll.insert_one(doc)
+    doc["_id"] = str(res.inserted_id)
+    doc["userId"] = str(doc["userId"])
+    return doc
 
 
 @router.post("", response_model=FinancialProfileResponse, status_code=status.HTTP_201_CREATED)

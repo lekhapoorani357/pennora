@@ -43,7 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           title: const Text('Log Out'),
           content: const Text(
-            'Are you sure you want to log out of GoalSync on this device?',
+            'Are you sure you want to log out of Pennora on this device?',
             style: TextStyle(fontSize: 14),
           ),
           actions: [

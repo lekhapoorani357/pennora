@@ -7,10 +7,10 @@ import 'features/dashboard/presentation/pages/dashboard_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthService.instance.init();
-  runApp(const GoalSyncApp());
+  runApp(const PennoraApp());
 }
 
-/// Root application widget for GoalSync.
+/// Root application widget for Pennora.
 ///
 /// Wires the centralized [AppTheme] into [MaterialApp], supports Light/Dark/System
 /// modes, and automatically routes based on authentication state:
@@ -18,10 +18,10 @@ void main() async {
 /// - Unauthenticated -> [WelcomePage]
 ///
 /// Financial Onboarding is accessed exclusively via the Dashboard.
-class GoalSyncApp extends StatelessWidget {
+class PennoraApp extends StatelessWidget {
   final Widget? home;
 
-  const GoalSyncApp({super.key, this.home});
+  const PennoraApp({super.key, this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -43,3 +43,6 @@ class GoalSyncApp extends StatelessWidget {
     );
   }
 }
+
+/// Backwards compatibility alias for tests and existing references
+typedef GoalSyncApp = PennoraApp;

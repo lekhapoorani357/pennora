@@ -105,7 +105,7 @@ class AiInsightsService extends ChangeNotifier {
       return 'Session expired. Please log in again.';
     }
     if (msg.contains('Connection') || msg.contains('timeout')) {
-      return 'Cannot reach GoalSync server. Check your connection.';
+      return 'Cannot reach Pennora server. Check your connection.';
     }
     return 'Failed to load AI insights. Try again.';
   }

@@ -68,7 +68,7 @@ class StepIncome extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.space6),
           Text(
-            'GoalSync uses cash inflows to accurately measure liquidity and detect upcoming goal deficits.',
+            'Pennora uses cash inflows to accurately measure liquidity and detect upcoming goal deficits.',
             style: TextStyle(
               fontSize: 13,
               color: isDark

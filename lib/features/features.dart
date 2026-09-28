@@ -1,4 +1,4 @@
-// GoalSync features module.
+// Pennora features module.
 export 'auth/models/user_model.dart';
 export 'auth/presentation/pages/login_page.dart';
 export 'auth/presentation/pages/sign_up_page.dart';
@@ -29,3 +29,7 @@ export 'auth/services/auth_api_service.dart';
 export 'profile/services/profile_api_service.dart';
 export 'goals/services/goal_api_service.dart';
 export 'transactions/services/transaction_api_service.dart';
+export 'ai_copilot/models/pipeline_insight_model.dart';
+export 'ai_copilot/presentation/pages/ai_copilot_page.dart';
+export 'ai_copilot/services/ai_insights_service.dart';
+export 'ai_copilot/services/ai_insights_api_service.dart';

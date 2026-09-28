@@ -74,7 +74,7 @@ class ApiException implements Exception {
   factory ApiException.networkError([String? customMessage]) {
     return ApiException(
       message: customMessage ??
-          'Unable to connect to GoalSync server. Please check your internet connection.',
+          'Unable to connect to Pennora server. Please check your internet connection.',
       statusCode: null,
     );
   }

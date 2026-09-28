@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime
+from sqlalchemy import Column, String, Integer, Float, DateTime, Text
 from app.models.base import Base, generate_id, utc_now
 
 
@@ -7,15 +7,17 @@ class FinancialProfile(Base):
 
     id = Column("_id", String(36), primary_key=True, default=generate_id)
     userId = Column(String(36), unique=True, index=True, nullable=False)
-    age = Column(Integer, nullable=False)
-    occupation = Column(String(255), nullable=False)
+    financialRole = Column(String(50), default="professional", nullable=True)  # student | professional | family
+    roleData = Column(Text, nullable=True)  # JSON-encoded role-specific onboarding responses
+    age = Column(Integer, nullable=False, default=22)
+    occupation = Column(String(255), nullable=False, default="Professional")
     dependents = Column(Integer, default=0, nullable=False)
-    monthlyIncome = Column(Float, nullable=False)
+    monthlyIncome = Column(Float, nullable=False, default=0.0)
     incomeType = Column(String(100), default="Salary", nullable=False)
     additionalIncome = Column(Float, default=0.0, nullable=False)
-    currentSavings = Column(Float, nullable=False)
-    fixedExpenses = Column(Float, nullable=False)
-    variableExpenses = Column(Float, nullable=False)
+    currentSavings = Column(Float, nullable=False, default=0.0)
+    fixedExpenses = Column(Float, nullable=False, default=0.0)
+    variableExpenses = Column(Float, nullable=False, default=0.0)
     monthlyEMI = Column(Float, default=0.0, nullable=False)
     activeLoans = Column(Integer, default=0, nullable=False)
     createdAt = Column(DateTime, default=utc_now, nullable=False)
@@ -33,6 +35,8 @@ class FinancialProfile(Base):
         return {
             "_id": str(self.id),
             "userId": str(self.userId),
+            "financialRole": self.financialRole or "professional",
+            "roleData": self.roleData,
             "age": self.age,
             "occupation": self.occupation,
             "dependents": self.dependents,

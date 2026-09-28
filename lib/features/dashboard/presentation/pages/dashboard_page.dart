@@ -209,7 +209,7 @@ class _HomeDashboardView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'GoalSync',
+                          'Pennora',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -682,7 +682,7 @@ class _HomeDashboardView extends StatelessWidget {
         icon: Icons.flag_outlined,
         message: 'No financial goals created yet.',
         submessage:
-            'Create goals so GoalSync can analyze future financial conflicts.',
+            'Create goals so Pennora can analyze future financial conflicts.',
         actionButton: ElevatedButton.icon(
           onPressed: onNavigateToGoals,
           icon: const Icon(Icons.add_rounded, size: 16),
