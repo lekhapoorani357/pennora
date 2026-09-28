@@ -10,14 +10,11 @@ from app.schemas.financial_profile import (
 )
 
 router = APIRouter(prefix="/financial-profile", tags=["Financial Profile"])
+profile_router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
-@router.post("/role", response_model=FinancialProfileResponse, summary="Select or update user's financial role")
-def set_financial_role(
-    payload: RoleSelectionRequest,
-    current_user: dict = Depends(get_current_user),
-):
-    valid_roles = ["student", "professional", "family"]
+def _handle_set_role(payload: RoleSelectionRequest, current_user: dict):
+    valid_roles = ["student", "working_single", "working_married", "professional", "family"]
     role = payload.role.strip().lower()
     if role not in valid_roles:
         raise HTTPException(
@@ -25,28 +22,35 @@ def set_financial_role(
             detail=f"Role must be one of {valid_roles}",
         )
 
+    # Normalize aliases if desired
+    normalized_role = role
+    if role == "professional":
+        normalized_role = "working_single"
+    elif role == "family":
+        normalized_role = "working_married"
+
     coll = get_collection("financial_profiles")
     user_id = str(current_user["_id"])
     now = datetime.now(timezone.utc)
 
     existing = coll.find_one({"userId": user_id})
     if existing:
-        coll.update_one({"_id": existing["_id"]}, {"$set": {"financialRole": role, "updatedAt": now}})
+        coll.update_one({"_id": existing["_id"]}, {"$set": {"financialRole": normalized_role, "updatedAt": now}})
         updated = coll.find_one({"_id": existing["_id"]})
         updated["_id"] = str(updated["_id"])
         updated["userId"] = str(updated["userId"])
         return updated
 
-    default_occupation = "Student" if role == "student" else "Professional"
+    default_occupation = "Student" if normalized_role == "student" else "Professional"
     doc = {
         "userId": user_id,
-        "financialRole": role,
+        "financialRole": normalized_role,
         "roleData": None,
-        "age": 20 if role == "student" else 28,
+        "age": 20 if normalized_role == "student" else 28,
         "occupation": default_occupation,
-        "dependents": 2 if role == "family" else 0,
+        "dependents": 2 if normalized_role == "working_married" else 0,
         "monthlyIncome": 0.0,
-        "incomeType": "Pocket Money/Stipend" if role == "student" else "Salary",
+        "incomeType": "Pocket Money/Stipend" if normalized_role == "student" else "Salary",
         "additionalIncome": 0.0,
         "currentSavings": 0.0,
         "fixedExpenses": 0.0,
@@ -60,6 +64,40 @@ def set_financial_role(
     doc["_id"] = str(res.inserted_id)
     doc["userId"] = str(doc["userId"])
     return doc
+
+
+def _handle_get_role(current_user: dict):
+    coll = get_collection("financial_profiles")
+    user_id = str(current_user["_id"])
+    doc = coll.find_one({"userId": user_id})
+    role = doc.get("financialRole", "working_single") if doc else "working_single"
+    return {"role": role, "financialRole": role}
+
+
+@router.post("/role", response_model=FinancialProfileResponse, summary="Select or update user's financial role")
+def set_financial_role(
+    payload: RoleSelectionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    return _handle_set_role(payload, current_user)
+
+
+@router.get("/role", summary="Get user's current financial role")
+def get_financial_role(current_user: dict = Depends(get_current_user)):
+    return _handle_get_role(current_user)
+
+
+@profile_router.post("/role", response_model=FinancialProfileResponse, summary="Select or update user's financial role")
+def set_profile_role(
+    payload: RoleSelectionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    return _handle_set_role(payload, current_user)
+
+
+@profile_router.get("/role", summary="Get user's current financial role")
+def get_profile_role(current_user: dict = Depends(get_current_user)):
+    return _handle_get_role(current_user)
 
 
 @router.post("", response_model=FinancialProfileResponse, status_code=status.HTTP_201_CREATED)

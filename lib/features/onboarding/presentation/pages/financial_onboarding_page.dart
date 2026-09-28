@@ -13,7 +13,11 @@ import '../widgets/step_review.dart';
 
 /// Multi-step financial onboarding flow collecting user's financial baseline.
 class FinancialOnboardingPage extends StatefulWidget {
-  const FinancialOnboardingPage({super.key});
+  /// Pre-selected financial role (student | working_single | working_married).
+  /// When provided, this role is embedded in the saved profile.
+  final String? initialRole;
+
+  const FinancialOnboardingPage({super.key, this.initialRole});
 
   @override
   State<FinancialOnboardingPage> createState() =>
@@ -287,6 +291,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
 
       final profile = FinancialProfile(
         userId: userId,
+        financialRole: widget.initialRole ?? 'working_single',
         age: int.parse(_ageController.text.trim()),
         occupation: effectiveOccupation,
         dependents: _selectedDependents,

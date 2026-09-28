@@ -62,7 +62,7 @@ class AiInsightsService extends ChangeNotifier {
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       final results = await Future.wait([
@@ -77,7 +77,7 @@ class AiInsightsService extends ChangeNotifier {
       _error = _parseError(e);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      Future.microtask(() => notifyListeners());
     }
   }
 
@@ -87,7 +87,7 @@ class AiInsightsService extends ChangeNotifier {
     try {
       _latestInsight = await _api.getLatestInsight();
       _lastFetched = DateTime.now();
-      notifyListeners();
+      Future.microtask(() => notifyListeners());
     } catch (_) {
       // Silently ignore polling errors
     }
@@ -96,7 +96,7 @@ class AiInsightsService extends ChangeNotifier {
   void _setError(String message) {
     _error = message;
     _isLoading = false;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
   }
 
   String _parseError(Object e) {

@@ -176,7 +176,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Tap to view detailed financial state'));
+      final tapTarget = find.text('Tap to view detailed financial state');
+      await tester.ensureVisible(tapTarget);
+      await tester.tap(tapTarget);
       await tester.pumpAndSettle();
 
       expect(find.byType(FinancialStatePage), findsOneWidget);

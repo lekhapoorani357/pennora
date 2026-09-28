@@ -4,7 +4,7 @@ import 'package:goalsync/features/auth/presentation/pages/login_page.dart';
 import 'package:goalsync/features/auth/services/auth_service.dart';
 import 'package:goalsync/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:goalsync/features/onboarding/models/financial_profile_model.dart';
-import 'package:goalsync/features/onboarding/presentation/pages/financial_onboarding_page.dart';
+import 'package:goalsync/features/onboarding/presentation/pages/role_selection_page.dart';
 import 'package:goalsync/features/onboarding/services/financial_profile_service.dart';
 import 'package:goalsync/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -89,8 +89,8 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(FinancialOnboardingPage), findsOneWidget);
-      expect(find.text('Tell us about yourself'), findsOneWidget);
+      expect(find.byType(RoleSelectionPage), findsOneWidget);
+      expect(find.text('Tell us about\nyour financial life'), findsOneWidget);
     });
 
     testWidgets(
@@ -177,7 +177,7 @@ void main() {
       // Confirm dialog appears
       expect(
         find.text(
-          'Are you sure you want to log out of GoalSync on this device?',
+          'Are you sure you want to log out of Pennora on this device?',
         ),
         findsOneWidget,
       );
@@ -216,8 +216,8 @@ void main() {
       await tester.pumpWidget(const GoalSyncApp());
       await tester.pumpAndSettle();
 
-      expect(find.byType(FinancialOnboardingPage), findsOneWidget);
-      expect(find.text('Tell us about yourself'), findsOneWidget);
+      expect(find.byType(RoleSelectionPage), findsOneWidget);
+      expect(find.text('Tell us about\nyour financial life'), findsOneWidget);
     });
 
     testWidgets(

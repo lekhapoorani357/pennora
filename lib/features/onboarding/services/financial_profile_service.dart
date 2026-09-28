@@ -21,6 +21,7 @@ class FinancialProfileService extends ChangeNotifier {
 
   static const String _keyProfilePrefix = 'goalsync_financial_profile_';
   static const String _keyCompletedPrefix = 'goalsync_onboarding_completed_';
+  static const String _keyRolePrefix = 'goalsync_financial_role_';
 
   final ProfileApiService _profileApiService;
 
@@ -55,6 +56,43 @@ class FinancialProfileService extends ChangeNotifier {
     }
   }
 
+  /// Get currently selected role for user.
+  String getRole(String? userId) {
+    if (userId == null || userId.isEmpty) return 'working_single';
+    final prof = getProfile(userId);
+    if (prof != null) return prof.normalizedRole;
+    final storedRole = _prefs?.getString('$_keyRolePrefix$userId');
+    if (storedRole != null && storedRole.isNotEmpty) return storedRole;
+    return 'working_single';
+  }
+
+  /// Returns true if the user has explicitly chosen a role (vs. receiving the
+  /// default 'working_single'). Used to decide whether to show RoleSelectionPage.
+  bool hasExplicitRole(String? userId) {
+    if (userId == null || userId.isEmpty) return false;
+    final prof = getProfile(userId);
+    if (prof != null && prof.isCompleted) return true;
+    final storedRole = _prefs?.getString('$_keyRolePrefix$userId');
+    return storedRole != null && storedRole.isNotEmpty;
+  }
+
+
+  /// Persist selected role both locally and to the backend.
+  Future<void> saveRole(String userId, String role) async {
+    if (_prefs == null) await init();
+    final normalized = (role == 'family')
+        ? 'working_married'
+        : (role == 'professional' ? 'working_single' : role);
+    await _prefs?.setString('$_keyRolePrefix$userId', normalized);
+
+    if (ApiClient.instance.authToken != null) {
+      try {
+        await _profileApiService.setFinancialRole(normalized);
+      } catch (_) {}
+    }
+    notifyListeners();
+  }
+
   /// Fetch financial profile from backend GET /financial-profile and sync local storage.
   Future<FinancialProfile?> fetchProfileFromBackend(String? userId) async {
     if (userId == null || userId.isEmpty) return null;
@@ -69,6 +107,10 @@ class FinancialProfileService extends ChangeNotifier {
         await _prefs?.setString(
           '$_keyProfilePrefix$userId',
           backendProfile.toJson(),
+        );
+        await _prefs?.setString(
+          '$_keyRolePrefix$userId',
+          backendProfile.normalizedRole,
         );
         await _prefs?.setBool('$_keyCompletedPrefix$userId', true);
         notifyListeners();
@@ -93,6 +135,10 @@ class FinancialProfileService extends ChangeNotifier {
         ) ??
         false;
 
+    await _prefs?.setString(
+      '$_keyRolePrefix${profile.userId}',
+      profile.normalizedRole,
+    );
     await _prefs?.setBool('$_keyCompletedPrefix${profile.userId}', true);
 
     // 2. Synchronize to backend if authenticated
@@ -118,6 +164,7 @@ class FinancialProfileService extends ChangeNotifier {
     if (userId.isEmpty) return;
     await _prefs?.remove('$_keyProfilePrefix$userId');
     await _prefs?.remove('$_keyCompletedPrefix$userId');
+    await _prefs?.remove('$_keyRolePrefix$userId');
     notifyListeners();
   }
 }

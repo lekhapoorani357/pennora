@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
+import '../../../onboarding/presentation/pages/role_questionnaire_page.dart';
+import '../../../onboarding/presentation/pages/role_selection_page.dart';
+import '../../../onboarding/services/financial_profile_service.dart';
 import '../../services/auth_service.dart';
 import 'sign_up_page.dart';
 
@@ -111,10 +114,25 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (result.isSuccess) {
-        // Always go to the Dashboard after login.
-        // Onboarding is accessed only via the Dashboard button.
+        final userId = AuthService.instance.currentUser?.id ?? '';
+        final profileService = FinancialProfileService.instance;
+        final isOnboarded = profileService.isOnboardingCompleted(userId);
+        final hasExplicitRole = profileService.hasExplicitRole(userId);
+
+        Widget destination;
+        if (!isOnboarded) {
+          if (!hasExplicitRole) {
+            destination = const RoleSelectionPage();
+          } else {
+            final role = profileService.getRole(userId);
+            destination = RoleQuestionnairePage(role: role);
+          }
+        } else {
+          destination = const DashboardPage();
+        }
+
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
+          MaterialPageRoute(builder: (_) => destination),
           (route) => false,
         );
       } else {

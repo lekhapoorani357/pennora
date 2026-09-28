@@ -27,6 +27,27 @@ class ProfileApiService {
     );
   }
 
+  /// Set user's financial role via POST /financial-profile/role.
+  Future<FinancialProfile> setFinancialRole(String role) async {
+    final response = await _client.post(
+      '/financial-profile/role',
+      body: {'role': role},
+      requiresAuth: true,
+    );
+    return _mapToFinancialProfile(response as Map<String, dynamic>);
+  }
+
+  /// Get user's financial role via GET /financial-profile/role.
+  Future<String> getFinancialRole() async {
+    try {
+      final response = await _client.get('/financial-profile/role', requiresAuth: true);
+      if (response is Map<String, dynamic>) {
+        return (response['financialRole'] ?? response['role'] ?? 'working_single').toString();
+      }
+    } catch (_) {}
+    return 'working_single';
+  }
+
   /// Retrieve the authenticated user's financial profile from GET /financial-profile.
   /// Returns null if not found (404).
   Future<FinancialProfile?> getFinancialProfile() async {
@@ -67,6 +88,8 @@ class ProfileApiService {
 
   Map<String, dynamic> _financialProfileToPayload(FinancialProfile profile) {
     return {
+      'financialRole': profile.normalizedRole,
+      'roleData': profile.roleData,
       'age': profile.age,
       'occupation': profile.occupation,
       'dependents': profile.dependents,
@@ -84,6 +107,8 @@ class ProfileApiService {
   FinancialProfile _mapToFinancialProfile(Map<String, dynamic> map) {
     return FinancialProfile(
       userId: (map['userId'] ?? '').toString(),
+      financialRole: (map['financialRole'] ?? map['role'] ?? 'working_single').toString(),
+      roleData: map['roleData']?.toString(),
       age: (map['age'] as num?)?.toInt() ?? 18,
       occupation: (map['occupation'] ?? '').toString(),
       dependents: (map['dependents'] as num?)?.toInt() ?? 0,
@@ -92,11 +117,21 @@ class ProfileApiService {
       additionalIncome: (map['additionalIncome'] as num?)?.toDouble() ?? 0.0,
       currentSavings: (map['currentSavings'] as num?)?.toDouble() ?? 0.0,
       monthlyFixedExpenses:
-          (map['fixedExpenses'] as num?)?.toDouble() ?? 0.0,
+          (map['fixedExpenses'] as num?)?.toDouble() ??
+          (map['monthlyFixedExpenses'] as num?)?.toDouble() ??
+          0.0,
       monthlyVariableExpenses:
-          (map['variableExpenses'] as num?)?.toDouble() ?? 0.0,
-      existingLoanEmi: (map['monthlyEMI'] as num?)?.toDouble() ?? 0.0,
-      activeLoansCount: (map['activeLoans'] as num?)?.toInt() ?? 0,
+          (map['variableExpenses'] as num?)?.toDouble() ??
+          (map['monthlyVariableExpenses'] as num?)?.toDouble() ??
+          0.0,
+      existingLoanEmi:
+          (map['monthlyEMI'] as num?)?.toDouble() ??
+          (map['existingLoanEmi'] as num?)?.toDouble() ??
+          0.0,
+      activeLoansCount:
+          (map['activeLoans'] as num?)?.toInt() ??
+          (map['activeLoansCount'] as num?)?.toInt() ??
+          0,
       isCompleted: true,
       completedAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()

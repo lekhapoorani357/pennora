@@ -10,12 +10,14 @@ import '../../../goals/presentation/pages/goals_page.dart';
 import '../../../goals/services/goal_service.dart';
 import '../../../onboarding/models/financial_profile_model.dart';
 import '../../../onboarding/presentation/pages/financial_onboarding_page.dart';
+import '../../../onboarding/presentation/pages/role_selection_page.dart';
 import '../../../onboarding/services/financial_profile_service.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../transactions/models/transaction_model.dart';
 import '../../../transactions/presentation/pages/transaction_detail_page.dart';
 import '../../../transactions/presentation/pages/transactions_page.dart';
 import '../../../transactions/services/transaction_service.dart';
+import '../../../investment/presentation/pages/money_growth_page.dart';
 
 
 /// GoalSync Main Dashboard with 5-tab bottom navigation.
@@ -40,13 +42,15 @@ class _DashboardPageState extends State<DashboardPage> {
     TransactionService.instance.addListener(_refresh);
     AiInsightsService.instance.addListener(_refresh);
 
-    final userId = AuthService.instance.currentUser?.id;
-    if (userId != null && userId.isNotEmpty) {
-      GoalService.instance.fetchGoalsFromBackend(userId);
-      FinancialProfileService.instance.fetchProfileFromBackend(userId);
-      TransactionService.instance.fetchTransactionsFromBackend(userId);
-      AiInsightsService.instance.refresh();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = AuthService.instance.currentUser?.id;
+      if (userId != null && userId.isNotEmpty) {
+        GoalService.instance.fetchGoalsFromBackend(userId);
+        FinancialProfileService.instance.fetchProfileFromBackend(userId);
+        TransactionService.instance.fetchTransactionsFromBackend(userId);
+        AiInsightsService.instance.refresh();
+      }
+    });
   }
 
   @override
@@ -176,6 +180,7 @@ class _HomeDashboardView extends StatelessWidget {
     final insight = AiInsightsService.instance.latestInsight;
     final hasConflict = insight?.hasConflict ?? false;
     final conflicts = insight?.conflicts ?? [];
+    final role = FinancialProfileService.instance.getRole(userId);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -262,7 +267,7 @@ class _HomeDashboardView extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.space24),
 
-                // Welcome card
+                // Welcome card with role badge
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.space20),
                   decoration: BoxDecoration(
@@ -289,16 +294,24 @@ class _HomeDashboardView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Welcome back, $userName',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Welcome back, $userName',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
+                            ),
+                          ),
+                          // Role badge
+                          _RoleBadge(role: role),
+                        ],
                       ),
                       const SizedBox(height: AppDimensions.space12),
                       const Divider(height: 1),
@@ -330,6 +343,10 @@ class _HomeDashboardView extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: AppDimensions.space16),
+
+                // Role-specific tips banner
+                _RoleTipsBanner(role: role, isDark: isDark),
                 const SizedBox(height: AppDimensions.space24),
 
                 Text(
@@ -383,6 +400,13 @@ class _HomeDashboardView extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.space16),
                   ],
+
+                // MONEY GROWTH & SIMULATOR
+                _buildMoneyGrowthCard(
+                  context: context,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppDimensions.space16),
 
                 // GOAL CONFLICTS
                 _buildGoalConflictsCard(
@@ -1132,6 +1156,111 @@ class _HomeDashboardView extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildMoneyGrowthCard({
+    required BuildContext context,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MoneyGrowthPage()),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.space20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(
+            color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withAlpha(30)
+                  : Colors.black.withAlpha(8),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: AppColors.gradientAccent,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              ),
+              child: const Icon(
+                Icons.trending_up_rounded,
+                size: 24,
+                color: AppColors.deepNavy,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.space16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Money Growth & Simulator',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.mint.withAlpha(30),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'NEW',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.mint,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'SIP/Lump-sum projections & What-If scenarios',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 
@@ -1388,6 +1517,162 @@ class _TransactionMiniRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RoleBadge extends StatelessWidget {
+  final String role;
+
+  const _RoleBadge({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    String emoji;
+    String label;
+    Color accentColor;
+
+    switch (role) {
+      case 'student':
+        emoji = '🎓';
+        label = 'Student';
+        accentColor = const Color(0xFF38BDF8);
+        break;
+      case 'working_married':
+        emoji = '👨‍👩‍👧';
+        label = 'Family';
+        accentColor = AppColors.mint;
+        break;
+      case 'working_single':
+      default:
+        emoji = '💼';
+        label = 'Professional';
+        accentColor = AppColors.electricCyan;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RoleSelectionPage()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: accentColor.withAlpha(25),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+          border: Border.all(color: accentColor.withAlpha(80)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 13)),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: accentColor,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.edit_outlined, size: 12, color: accentColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleTipsBanner extends StatelessWidget {
+  final String role;
+  final bool isDark;
+
+  const _RoleTipsBanner({required this.role, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    String tipTitle;
+    String tipBody;
+    IconData icon;
+    Color color;
+
+    switch (role) {
+      case 'student':
+        tipTitle = 'Student Financial Strategy';
+        tipBody =
+            'Prioritize your essential campus expenses and build a ₹5,000 emergency buffer before allocating funds to gadgets or discretionary trips.';
+        icon = Icons.school_rounded;
+        color = const Color(0xFF38BDF8);
+        break;
+      case 'working_married':
+        tipTitle = 'Family & Household Resilience';
+        tipBody =
+            'Ensure household medical & term insurance coverage for all dependents. Maintain at least 6 months of combined family living expenses in emergency reserves.';
+        icon = Icons.family_restroom_rounded;
+        color = AppColors.mint;
+        break;
+      case 'working_single':
+      default:
+        tipTitle = 'Professional Wealth Building';
+        tipBody =
+            'Target a minimum 20% monthly savings rate. Build 3–6 months of basic living costs in high-liquidity reserves before accelerating long-term growth.';
+        icon = Icons.trending_up_rounded;
+        color = AppColors.electricCyan;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: color.withAlpha(70)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withAlpha(30),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tipTitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tipBody,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

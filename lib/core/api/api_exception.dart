@@ -12,7 +12,8 @@ class ApiException implements Exception {
 
   bool get isUnauthorized => statusCode == 401;
   bool get isNotFound => statusCode == 404;
-  bool get isValidationError => statusCode == 400 || statusCode == 422;
+  bool get isValidationError =>
+      (statusCode == 400 || statusCode == 422) && details != null;
   bool get isServerError => statusCode != null && statusCode! >= 500;
   bool get isNetworkError => statusCode == null;
 

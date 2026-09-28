@@ -4,6 +4,11 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../ai_copilot/services/ai_insights_service.dart';
+import '../../../onboarding/presentation/pages/role_selection_page.dart';
+import '../../../onboarding/services/financial_profile_service.dart';
+import '../../../investment/presentation/pages/money_growth_page.dart';
+import '../../../monetization/presentation/pages/premium_page.dart';
+import '../../../monetization/services/subscription_service.dart';
 
 /// Profile Page showing verified account details and session termination.
 class ProfilePage extends StatefulWidget {
@@ -270,6 +275,199 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: AppDimensions.space24),
+
+                  // Financial Role Card
+                  Builder(builder: (ctx) {
+                    final uid = user?.id ?? '';
+                    final role = FinancialProfileService.instance.getRole(uid);
+                    return Container(
+                      padding: const EdgeInsets.all(AppDimensions.space16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                        border: Border.all(
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.electricCyan.withAlpha(25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              role == 'student'
+                                  ? Icons.school_rounded
+                                  : (role == 'working_married'
+                                      ? Icons.family_restroom_rounded
+                                      : Icons.work_rounded),
+                              size: 20,
+                              color: AppColors.electricCyan,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Financial Profile Role',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _roleLabel(role),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? AppColors.textPrimaryDark
+                                        : AppColors.textPrimaryLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const RoleSelectionPage(),
+                              ),
+                            ),
+                            child: const Text('Change'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: AppDimensions.space16),
+
+                  // Pro Subscription Card
+                  AnimatedBuilder(
+                    animation: SubscriptionService.instance,
+                    builder: (ctx, _) {
+                      final isPro = SubscriptionService.instance.isPremium;
+                      return Container(
+                        padding: const EdgeInsets.all(AppDimensions.space16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isPro
+                                ? [const Color(0xFF0F2B1D), const Color(0xFF0B1E14)]
+                                : [const Color(0xFF1B2A4A), const Color(0xFF101B30)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                          border: Border.all(
+                            color: isPro ? AppColors.mint : AppColors.warning,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isPro
+                                  ? Icons.workspace_premium_rounded
+                                  : Icons.star_border_rounded,
+                              size: 28,
+                              color: isPro ? AppColors.mint : AppColors.warning,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isPro ? 'Pennora Pro Active 🌟' : 'Pennora Free Plan',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: isPro ? AppColors.mint : AppColors.warning,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isPro
+                                        ? 'Unlimited goals & full simulator access'
+                                        : 'Upgrade for ₹99/mo to unlock all tools',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white.withAlpha(200),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const PremiumPage(),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isPro ? AppColors.mint : AppColors.warning,
+                                foregroundColor: AppColors.deepNavy,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              child: Text(isPro ? 'Manage' : 'Upgrade'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: AppDimensions.space20),
+
+                  // Growth & Admin Navigation Tiles
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                      border: Border.all(
+                        color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.trending_up_rounded,
+                              color: AppColors.electricCyan),
+                          title: const Text(
+                            'Money Growth & Simulator',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: const Text(
+                            'Interactive SIP, FD, PPF & What-If Scenarios',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MoneyGrowthPage(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: AppDimensions.space32),
 
                   // Logout Button
@@ -380,5 +578,16 @@ class _ProfilePageState extends State<ProfilePage> {
       return str.length >= 2 ? str.substring(0, 2).toUpperCase() : str.toUpperCase();
     }
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+
+  String _roleLabel(String role) {
+    switch (role) {
+      case 'student':
+        return 'College Student';
+      case 'working_married':
+        return 'Working Married / Family';
+      default:
+        return 'Working Professional';
+    }
   }
 }

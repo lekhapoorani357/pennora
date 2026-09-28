@@ -14,7 +14,16 @@ from pydantic import BaseModel
 
 from app.database import get_collection, get_session_factory
 from app.dependencies import get_current_user
-from app.models import User, Subscription, RevenueEvent, AnalyticsEvent, Goal, Transaction, InvestmentScenario
+from app.models import (
+    User,
+    FinancialProfile,
+    Subscription,
+    RevenueEvent,
+    AnalyticsEvent,
+    Goal,
+    Transaction,
+    InvestmentScenario,
+)
 
 router = APIRouter(prefix="/api/admin", tags=["Admin & Business Dashboard"])
 
@@ -41,6 +50,11 @@ def get_admin_metrics(current_user: dict = Depends(verify_admin_access)):
         # 1. User Metrics
         all_users = session.query(User).all()
         total_users = len(all_users)
+
+        all_profiles = session.query(FinancialProfile).all()
+        student_users = sum(1 for p in all_profiles if (p.financialRole or "").lower() == "student")
+        working_single_users = sum(1 for p in all_profiles if (p.financialRole or "").lower() in ("working_single", "professional"))
+        working_married_users = sum(1 for p in all_profiles if (p.financialRole or "").lower() in ("working_married", "family"))
 
         # Subscriptions
         all_subs = session.query(Subscription).all()
@@ -127,10 +141,20 @@ def get_admin_metrics(current_user: dict = Depends(verify_admin_access)):
             {"name": "Premium Users", "count": premium_users, "percentage": round(conversion_rate, 1)},
         ]
 
+        # Chart Data: Users by Role
+        role_breakdown = [
+            {"role": "Student", "count": student_users},
+            {"role": "Working Single", "count": working_single_users},
+            {"role": "Working Married", "count": working_married_users},
+        ]
+
         return {
             "userMetrics": {
                 "totalRegisteredUsers": total_users,
                 "activeUsers": active_users,
+                "studentUsers": student_users,
+                "workingSingleUsers": working_single_users,
+                "workingMarriedUsers": working_married_users,
                 "freeUsers": free_users,
                 "premiumUsers": premium_users,
                 "conversionRate": round(conversion_rate, 2),
@@ -167,11 +191,35 @@ def get_admin_metrics(current_user: dict = Depends(verify_admin_access)):
             "charts": {
                 "revenueBySource": revenue_by_source,
                 "userTierBreakdown": tier_breakdown,
+                "usersByRole": role_breakdown,
             },
             "notice": "Metrics are calculated directly from SQLite database. Demo and simulated metrics are explicitly isolated and labelled.",
         }
     finally:
         session.close()
+
+
+@router.get("/revenue", summary="Get detailed business revenue breakdown")
+def get_admin_revenue(current_user: dict = Depends(verify_admin_access)):
+    metrics = get_admin_metrics(current_user)
+    return {
+        "revenueMetrics": metrics["revenueMetrics"],
+        "charts": {"revenueBySource": metrics["charts"]["revenueBySource"]},
+        "isDemo": True,
+        "taxNotes": "GST (18%) is segregated from net revenue.",
+    }
+
+
+@router.get("/users", summary="Get detailed user breakdown by role and subscription")
+def get_admin_users(current_user: dict = Depends(verify_admin_access)):
+    metrics = get_admin_metrics(current_user)
+    return {
+        "userMetrics": metrics["userMetrics"],
+        "charts": {
+            "userTierBreakdown": metrics["charts"]["userTierBreakdown"],
+            "usersByRole": metrics["charts"]["usersByRole"],
+        },
+    }
 
 
 @router.post("/grant-admin", summary="Grant admin status to user (for test/demo evaluation)")

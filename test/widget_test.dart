@@ -4,6 +4,7 @@ import 'package:goalsync/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:goalsync/features/auth/services/auth_service.dart';
 import 'package:goalsync/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:goalsync/features/onboarding/presentation/pages/financial_onboarding_page.dart';
+import 'package:goalsync/features/onboarding/presentation/pages/role_selection_page.dart';
 import 'package:goalsync/features/onboarding/services/financial_profile_service.dart';
 import 'package:goalsync/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +25,7 @@ void main() {
     await tester.pump();
 
     // Verify Brand
-    expect(find.text('GoalSync'), findsWidgets);
+    expect(find.text('Pennora'), findsWidgets);
     expect(find.text('Your money changes.'), findsOneWidget);
     expect(find.text('Your goals should adapt.'), findsOneWidget);
 
@@ -123,6 +124,33 @@ void main() {
     await tester.tap(createAccountBtn);
     await tester.pumpAndSettle();
 
+    // Verify redirected to Login Page
+    expect(find.text('Welcome back'), findsOneWidget);
+
+    // Login with the created account
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Enter email or phone number'),
+      'aditya@example.com',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Enter your password'),
+      'Password123',
+    );
+    await tester.tap(find.text('Login'));
+    await tester.pumpAndSettle();
+
+    // Verify redirected to Role Selection Page
+    expect(find.byType(RoleSelectionPage), findsOneWidget);
+    // Select Working Professional role card
+    await tester.tap(find.text('Working Professional'));
+    await tester.pumpAndSettle();
+
+    // Tap Continue on selected role
+    final continueRoleBtn = find.text('Continue →');
+    await tester.ensureVisible(continueRoleBtn);
+    await tester.tap(continueRoleBtn);
+    await tester.pumpAndSettle();
+
     // Verify redirected to Financial Onboarding Page
     expect(find.byType(FinancialOnboardingPage), findsOneWidget);
     expect(find.text('Tell us about yourself'), findsOneWidget);
@@ -185,20 +213,17 @@ void main() {
     expect(find.text('Welcome back, Aditya Verma'), findsOneWidget);
     expect(find.text('aditya@example.com'), findsOneWidget);
 
-    // Verify 4 genuine empty state cards
+    // Verify financial modules and onboarded state
     expect(find.text('FINANCIAL STATE'), findsOneWidget);
-    expect(find.text('No financial data connected yet.'), findsOneWidget);
-    expect(find.text('Set Up Financial Profile'), findsOneWidget);
+    expect(find.text('Income'), findsOneWidget);
 
     expect(find.text('YOUR GOALS'), findsOneWidget);
-    expect(find.text('No financial goals created yet.'), findsOneWidget);
     expect(find.text('Create Your First Goal'), findsOneWidget);
 
     expect(find.text('RECENT TRANSACTIONS'), findsOneWidget);
-    expect(find.text('No transactions available yet.'), findsOneWidget);
+    expect(find.text('No transactions yet'), findsOneWidget);
 
-    expect(find.text('GOAL CONFLICTS'), findsOneWidget);
-    expect(find.text('No conflicts detected.'), findsOneWidget);
+    expect(find.text('Professional Wealth Building'), findsOneWidget);
   });
 
   testWidgets('Bottom navigation tabs switch and Profile displays Logout',
@@ -230,6 +255,8 @@ void main() {
     expect(find.text('Transactions'), findsOneWidget);
 
     // Switch to AI tab
+    await tester.tap(find.text('AI'));
+    await tester.pumpAndSettle();
     expect(find.text('AI Copilot'), findsWidgets);
 
 
