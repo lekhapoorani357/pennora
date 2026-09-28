@@ -87,7 +87,7 @@ class StepReview extends StatelessWidget {
             stepIndex: 0,
             title: 'About You',
             icon: Icons.person_outline_rounded,
-            tagColor: AppColors.electricCyan,
+            tagColor: const Color(0xFF8B5CF6),
             rows: [
               _buildRow('Age', '$age years', isDark),
               _buildRow('Occupation', occupation, isDark),
@@ -225,17 +225,15 @@ class StepReview extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+          color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withAlpha(30)
-                : Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withAlpha(isDark ? 28 : 6),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -246,10 +244,10 @@ class StepReview extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: tagColor.withAlpha(25),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 16, color: tagColor),
               ),
@@ -270,7 +268,7 @@ class StepReview extends StatelessWidget {
                 icon: const Icon(Icons.edit_outlined, size: 14),
                 label: const Text('Edit'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.electricCyan,
+                  foregroundColor: const Color(0xFF6366F1),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,

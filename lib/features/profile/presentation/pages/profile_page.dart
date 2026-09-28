@@ -10,7 +10,7 @@ import '../../../investment/presentation/pages/money_growth_page.dart';
 import '../../../monetization/presentation/pages/premium_page.dart';
 import '../../../monetization/services/subscription_service.dart';
 
-/// Profile Page showing verified account details and session termination.
+/// Profile Page showing verified account details, preferences, and session termination.
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -44,35 +44,51 @@ class _ProfilePageState extends State<ProfilePage> {
         return AlertDialog(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text('Log Out'),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withAlpha(25),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Log Out',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+            ],
+          ),
           content: const Text(
             'Are you sure you want to log out of Pennora on this device?',
-            style: TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: Color(0xFF64748B), height: 1.4),
           ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF64748B),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
+              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Log Out'),
+              child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         );
@@ -97,7 +113,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final isDark = theme.brightness == Brightness.dark;
     final user = AuthService.instance.currentUser;
 
-    final userName = user?.fullName.isNotEmpty == true ? user!.fullName : 'User';
+    final userName = user?.fullName.isNotEmpty == true ? user!.fullName : 'Pennora Member';
     final userEmail = user?.email.isNotEmpty == true ? user!.email : 'Not provided';
     final userPhone = user != null ? user.fullPhoneNumber : 'Not provided';
 
@@ -106,7 +122,11 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text(
           'Profile',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -124,55 +144,68 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile Avatar & Name Card
+                  // Hero Profile Card
                   Container(
-                    padding: const EdgeInsets.all(AppDimensions.space24),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.navyBorder
-                            : const Color(0xFFD6E4F0),
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF071A52),
+                          Color(0xFF0D256D),
+                          Color(0xFF1E1B4B),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark
-                              ? Colors.black.withAlpha(50)
-                              : Colors.black.withAlpha(10),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                          color: const Color(0xFF071A52).withAlpha(100),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
+                    padding: const EdgeInsets.all(AppDimensions.space24),
                     child: Column(
                       children: [
-                        // Avatar Initials
+                        // Avatar Initials with outer gradient ring
                         Container(
-                          width: 72,
-                          height: 72,
+                          padding: const EdgeInsets.all(3.5),
                           decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                             gradient: const LinearGradient(
-                              colors: AppColors.gradientAccent,
+                              colors: [
+                                Color(0xFF38BDF8),
+                                Color(0xFF818CF8),
+                                Color(0xFFC084FC),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.electricCyan.withAlpha(80),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
+                                color: const Color(0xFF818CF8).withAlpha(100),
+                                blurRadius: 18,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: Text(
-                              _getInitials(userName),
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.deepNavy,
+                          child: Container(
+                            width: 76,
+                            height: 76,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF0B1F5E),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _getInitials(userName),
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),
@@ -181,94 +214,116 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         Text(
                           userName,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: Colors.white,
+                            letterSpacing: -0.4,
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.space4),
+                        const SizedBox(height: 6),
 
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.cyanGlow,
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white.withAlpha(25),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.electricCyan.withAlpha(80),
+                              color: Colors.white.withAlpha(50),
                             ),
                           ),
-                          child: const Text(
-                            'Personal Account',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.electricCyan,
-                              letterSpacing: 0.5,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.verified_rounded, size: 13, color: Color(0xFF38BDF8)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Personal Account',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space20),
+                  const SizedBox(height: AppDimensions.space24),
 
                   // Account Information Section
-                  Text(
-                    'ACCOUNT INFORMATION',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'ACCOUNT INFORMATION',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space8),
+                  const SizedBox(height: AppDimensions.space10),
 
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.navyBorder
-                            : const Color(0xFFD6E4F0),
+                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(isDark ? 30 : 8),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
                         _buildInfoTile(
                           icon: Icons.person_outline_rounded,
+                          iconColor: const Color(0xFF3B82F6),
                           title: 'Full Name',
                           value: userName,
                           isDark: isDark,
                         ),
-                        const Divider(height: 1),
+                        Divider(
+                          height: 1,
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
+                        ),
                         _buildInfoTile(
                           icon: Icons.phone_outlined,
-                          title: 'Phone',
+                          iconColor: const Color(0xFF10B981),
+                          title: 'Phone Number',
                           value: userPhone,
                           isDark: isDark,
                         ),
-                        const Divider(height: 1),
+                        Divider(
+                          height: 1,
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
+                        ),
                         _buildInfoTile(
                           icon: Icons.email_outlined,
-                          title: 'Email',
+                          iconColor: const Color(0xFF8B5CF6),
+                          title: 'Email Address',
                           value: userEmail,
                           isDark: isDark,
                         ),
-                        const Divider(height: 1),
+                        Divider(
+                          height: 1,
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
+                        ),
                         _buildInfoTile(
-                          icon: Icons.security_rounded,
-                          title: 'Account Status',
-                          value: 'Active (Local Session)',
+                          icon: Icons.shield_outlined,
+                          iconColor: const Color(0xFF06B6D4),
+                          title: 'Session Status',
+                          value: 'Active (Secured)',
                           isDark: isDark,
                           trailingColor: AppColors.mint,
                         ),
@@ -285,9 +340,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.all(AppDimensions.space16),
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Row(
@@ -295,7 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.electricCyan.withAlpha(25),
+                              color: const Color(0xFF8B5CF6).withAlpha(25),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -305,7 +360,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ? Icons.family_restroom_rounded
                                       : Icons.work_rounded),
                               size: 20,
-                              color: AppColors.electricCyan,
+                              color: const Color(0xFF8B5CF6),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -366,7 +421,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isPro ? AppColors.mint : AppColors.warning,
                           ),
@@ -433,34 +488,37 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                   ),
 
-                  const SizedBox(height: AppDimensions.space20),
+                  const SizedBox(height: AppDimensions.space16),
 
                   // Growth & Admin Navigation Tiles
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
                       children: [
-                        ListTile(
-                          leading: const Icon(Icons.trending_up_rounded,
-                              color: AppColors.electricCyan),
-                          title: const Text(
-                            'Money Growth & Simulator',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: const Text(
-                            'Interactive SIP, FD, PPF & What-If Scenarios',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MoneyGrowthPage(),
+                        Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            leading: const Icon(Icons.trending_up_rounded,
+                                color: Color(0xFF3B82F6)),
+                            title: const Text(
+                              'Money Growth & Simulator',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: const Text(
+                              'Interactive SIP, FD, PPF & What-If Scenarios',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const MoneyGrowthPage(),
+                              ),
                             ),
                           ),
                         ),
@@ -468,6 +526,61 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
+                  const SizedBox(height: AppDimensions.space20),
+
+                  // Preferences & System
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'PREFERENCES & SYSTEM',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.space10),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(isDark ? 30 : 8),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoTile(
+                          icon: Icons.currency_rupee_rounded,
+                          iconColor: const Color(0xFFF59E0B),
+                          title: 'Default Currency',
+                          value: 'INR (₹)',
+                          isDark: isDark,
+                        ),
+                        Divider(
+                          height: 1,
+                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
+                        ),
+                        _buildInfoTile(
+                          icon: Icons.info_outline_rounded,
+                          iconColor: const Color(0xFF64748B),
+                          title: 'Application Version',
+                          value: 'Pennora v1.0.0 (AI Edition)',
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppDimensions.space32),
 
                   // Logout Button
@@ -475,25 +588,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     onPressed: () => _handleLogout(context),
                     icon: const Icon(Icons.logout_rounded, size: 20),
                     label: const Text(
-                      'Logout',
+                      'Log Out',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       side: BorderSide(
-                        color: AppColors.error.withAlpha(120),
+                        color: AppColors.error.withAlpha(90),
                         width: 1.5,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       backgroundColor: isDark
-                          ? AppColors.error.withAlpha(20)
-                          : AppColors.error.withAlpha(12),
+                          ? AppColors.error.withAlpha(15)
+                          : AppColors.error.withAlpha(10),
                     ),
                   ),
                   const SizedBox(height: AppDimensions.space24),
@@ -508,6 +622,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInfoTile({
     required IconData icon,
+    required Color iconColor,
     required String title,
     required String value,
     required bool isDark,
@@ -516,27 +631,23 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.space16,
-        vertical: AppDimensions.space12,
+        vertical: 14,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.navyMid
-                  : AppColors.lightSurfaceVariant,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+              color: iconColor.withAlpha(isDark ? 35 : 20),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
-              size: 18,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+              size: 20,
+              color: iconColor,
             ),
           ),
-          const SizedBox(width: AppDimensions.space12),
+          const SizedBox(width: AppDimensions.space14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,9 +656,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   title,
                   style: TextStyle(
                     fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -555,7 +667,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   value,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: trailingColor ??
                         (isDark
                             ? AppColors.textPrimaryDark
@@ -572,7 +684,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _getInitials(String name) {
     final parts = name.trim().split(' ').where((s) => s.isNotEmpty).toList();
-    if (parts.isEmpty) return 'GS';
+    if (parts.isEmpty) return 'P';
     if (parts.length == 1) {
       final str = parts[0];
       return str.length >= 2 ? str.substring(0, 2).toUpperCase() : str.toUpperCase();

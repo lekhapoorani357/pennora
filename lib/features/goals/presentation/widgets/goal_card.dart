@@ -30,17 +30,19 @@ class GoalCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.space16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+            color: isDark
+                ? AppColors.navyBorder.withAlpha(120)
+                : const Color(0xFFE2E8F0),
           ),
           boxShadow: [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withAlpha(30)
-                  : Colors.black.withAlpha(8),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+                  ? Colors.black.withAlpha(40)
+                  : const Color(0xFF0F172A).withAlpha(8),
+              blurRadius: 14,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -51,17 +53,18 @@ class GoalCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.navyMid
-                        : AppColors.lightSurfaceVariant,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                        ? AppColors.violet.withAlpha(30)
+                        : const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     _categoryIcon(goal.category),
                     size: 20,
-                    color: AppColors.electricCyan,
+                    color: AppColors.violet,
                   ),
                 ),
                 const SizedBox(width: AppDimensions.space12),
@@ -72,8 +75,9 @@ class GoalCard extends StatelessWidget {
                       Text(
                         goal.name,
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
@@ -86,6 +90,7 @@ class GoalCard extends StatelessWidget {
                         goal.category.displayName,
                         style: TextStyle(
                           fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           color: isDark
                               ? AppColors.textSecondaryDark
                               : AppColors.textSecondaryLight,
@@ -96,26 +101,25 @@ class GoalCard extends StatelessWidget {
                 ),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withAlpha(30),
-                    borderRadius:
-                        BorderRadius.circular(AppDimensions.radiusFull),
+                    color: statusColor.withAlpha(25),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: statusColor.withAlpha(80)),
                   ),
                   child: Text(
                     goal.statusLabel,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                       color: statusColor,
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.space12),
+            const SizedBox(height: AppDimensions.space14),
 
             // Progress bar
             GoalProgressBar(fraction: goal.progressFraction),
@@ -137,7 +141,7 @@ class GoalCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: goal.isCompleted
                         ? AppColors.mint
-                        : AppColors.electricCyan,
+                        : AppColors.royalBlue,
                   ),
                 ),
                 _amountLabel(

@@ -612,16 +612,20 @@ class _SignUpPageState extends State<SignUpPage> {
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: AppColors.gradientAccent,
+                          colors: [
+                            Color(0xFF5A58EE),
+                            Color(0xFF835CF6),
+                            Color(0xFFA855F7),
+                          ],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                        borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.electricCyan.withAlpha(90),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
+                            color: const Color(0xFF7C3AED).withAlpha(100),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -632,7 +636,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                            borderRadius: BorderRadius.circular(28),
                           ),
                         ),
                         child: _isLoading
@@ -642,7 +646,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.deepNavy,
+                                    Colors.white,
                                   ),
                                 ),
                               )
@@ -651,7 +655,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.deepNavy,
+                                  color: Colors.white,
                                   letterSpacing: 0.2,
                                 ),
                               ),

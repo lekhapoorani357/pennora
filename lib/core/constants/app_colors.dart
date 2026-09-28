@@ -1,149 +1,185 @@
 import 'package:flutter/material.dart';
 
-/// GoalSync centralized color palette.
+/// Pennora centralized color palette.
 ///
-/// Brand identity: Premium AI FinTech + Digital Intelligence + Modern SaaS.
-/// All colors are defined here as a single source of truth.
+/// Brand identity: "Smart money + personal growth + modern lifestyle + AI"
+/// Visual Direction: Deep Navy, Royal Blue, Violet, Purple, Pink, Lavender, Mint.
 abstract final class AppColors {
   // ─────────────────────────────────────────────────────────────
-  // Brand Core
+  // Brand Core Colors (From Reference UI)
   // ─────────────────────────────────────────────────────────────
 
-  /// Deep Navy – primary brand anchor, used as dark background & text on light.
-  static const Color deepNavy = Color(0xFF071A2B);
+  /// Deep Navy – background for hero cards, profile, AI copilot
+  static const Color deepNavy = Color(0xFF071A52);
+  static const Color deepNavyDarker = Color(0xFF051238);
+  static const Color deepNavyLighter = Color(0xFF0B1F5E);
 
-  /// Electric Cyan – primary accent / interactive highlight.
+  /// Royal Blue
+  static const Color royalBlue = Color(0xFF2563EB);
+
+  /// Violet & Purple
+  static const Color violet = Color(0xFF7C3AED);
+  static const Color purple = Color(0xFF8B5CF6);
+  static const Color purpleLight = Color(0xFFA78BFA);
+  static const Color lavender = Color(0xFFEEF2FF);
+  static const Color lavenderBorder = Color(0xFFE0E7FF);
+
+  /// Pink & Coral
+  static const Color pink = Color(0xFFEC4899);
+  static const Color pinkLight = Color(0xFFFCE7F3);
+  static const Color pinkAccent = Color(0xFFF472B6);
+
+  /// Mint & Teal & Cyan
+  static const Color mint = Color(0xFF14B8A6);
+  static const Color mintLight = Color(0xFFCCFBF1);
+  static const Color mintDark = Color(0xFF0D9488);
   static const Color electricCyan = Color(0xFF00D9FF);
-
-  /// Mint – secondary accent / success / positive indicators.
-  static const Color mint = Color(0xFF5FFFD2);
+  static const Color cyanGlow = Color(0x3300D9FF);
+  static const Color cyanDark = Color(0xFF0891B2);
 
   // ─────────────────────────────────────────────────────────────
-  // Brand Variants
+  // Brand Variants & Translucencies
   // ─────────────────────────────────────────────────────────────
 
-  /// Slightly lighter navy for layered surfaces in dark mode.
   static const Color navyLight = Color(0xFF0D2640);
-
-  /// Mid navy for cards / elevated containers in dark mode.
   static const Color navyMid = Color(0xFF102E4A);
-
-  /// Deep navy with very subtle blue tint for dark mode dividers.
-  static const Color navyBorder = Color(0xFF1A3A55);
-
-  /// Cyan with reduced opacity – used for glow effects & subtle highlights.
-  static const Color cyanGlow = Color(0x2900D9FF);
-
-  /// Mint with reduced opacity – used for positive badge backgrounds.
-  static const Color mintGlow = Color(0x295FFFD2);
-
-  /// Darker cyan shade for pressed/active states.
-  static const Color cyanDark = Color(0xFF00AACB);
-
-  /// Darker mint shade for pressed/active states.
-  static const Color mintDark = Color(0xFF2ECFA8);
+  static const Color navyBorder = Color(0xFF1E3A8A);
+  static const Color mintGlow = Color(0x3314B8A6);
+  static const Color purpleGlow = Color(0x338B5CF6);
 
   // ─────────────────────────────────────────────────────────────
   // Light Theme Surfaces
   // ─────────────────────────────────────────────────────────────
 
-  /// Light theme background – soft blue-tinted, not pure white.
-  static const Color lightBackground = Color(0xFFEFF5FB);
+  /// Clean soft background (from reference)
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color lightScaffold = Color(0xFFF8FAFC);
 
-  /// Light theme scaffold – very subtle blue tint.
-  static const Color lightScaffold = Color(0xFFF4F8FD);
-
-  /// Light theme surface (cards, sheets).
+  /// Clean white card surfaces
   static const Color lightSurface = Color(0xFFFFFFFF);
-
-  /// Light theme surface variant (input backgrounds, chips).
-  static const Color lightSurfaceVariant = Color(0xFFE3EDF7);
-
-  /// Light theme secondary surface.
-  static const Color lightSurface2 = Color(0xFFF0F6FC);
+  static const Color lightSurfaceVariant = Color(0xFFF1F5F9);
+  static const Color lightSurface2 = Color(0xFFF8FAFC);
+  static const Color lightBorder = Color(0xFFE2E8F0);
 
   // ─────────────────────────────────────────────────────────────
   // Dark Theme Surfaces
   // ─────────────────────────────────────────────────────────────
 
-  /// Dark theme background – Deep Navy.
-  static const Color darkBackground = deepNavy;
-
-  /// Dark theme scaffold – same as background for seamless feel.
-  static const Color darkScaffold = deepNavy;
-
-  /// Dark theme surface (cards, sheets) – slightly lighter navy.
-  static const Color darkSurface = navyLight;
-
-  /// Dark theme surface variant (input backgrounds, chips).
-  static const Color darkSurfaceVariant = navyMid;
-
-  /// Dark theme secondary surface.
-  static const Color darkSurface2 = Color(0xFF0F2438);
+  static const Color darkBackground = Color(0xFF071A52);
+  static const Color darkScaffold = Color(0xFF051238);
+  static const Color darkSurface = Color(0xFF0B1F5E);
+  static const Color darkSurfaceVariant = Color(0xFF132A75);
+  static const Color darkSurface2 = Color(0xFF0E2366);
 
   // ─────────────────────────────────────────────────────────────
   // Text Colors
   // ─────────────────────────────────────────────────────────────
 
-  /// Primary text on light surfaces.
-  static const Color textPrimaryLight = Color(0xFF071A2B);
+  static const Color textPrimaryLight = Color(0xFF0F172A);
+  static const Color textSecondaryLight = Color(0xFF64748B);
+  static const Color textTertiaryLight = Color(0xFF94A3B8);
 
-  /// Secondary text on light surfaces.
-  static const Color textSecondaryLight = Color(0xFF4A6580);
-
-  /// Tertiary / hint text on light surfaces.
-  static const Color textTertiaryLight = Color(0xFF8AAABF);
-
-  /// Primary text on dark surfaces.
-  static const Color textPrimaryDark = Color(0xFFE8F4FF);
-
-  /// Secondary text on dark surfaces.
-  static const Color textSecondaryDark = Color(0xFF8AAABF);
-
-  /// Tertiary / hint text on dark surfaces.
-  static const Color textTertiaryDark = Color(0xFF4A6580);
+  static const Color textPrimaryDark = Color(0xFFF8FAFC);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color textTertiaryDark = Color(0xFF64748B);
 
   // ─────────────────────────────────────────────────────────────
   // Semantic Colors
   // ─────────────────────────────────────────────────────────────
 
-  /// Success – aligned with mint brand color.
-  static const Color success = Color(0xFF1FD4A4);
-
-  /// Warning – warm amber that contrasts well on both themes.
-  static const Color warning = Color(0xFFFFB830);
-
-  /// Error – refined red that avoids the generic look.
-  static const Color error = Color(0xFFFF4D6A);
-
-  /// Info – aligned with electric cyan.
-  static const Color info = electricCyan;
+  static const Color success = Color(0xFF10B981);
+  static const Color successLight = Color(0xFFD1FAE5);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningLight = Color(0xFFFEF3C7);
+  static const Color error = Color(0xFFEF4444);
+  static const Color errorLight = Color(0xFFFEE2E2);
+  static const Color info = Color(0xFF3B82F6);
 
   // ─────────────────────────────────────────────────────────────
-  // Gradients (defined as list of stops for use in LinearGradient)
+  // Gradients (from Reference Design)
   // ─────────────────────────────────────────────────────────────
 
-  /// Primary brand gradient: Deep Navy → slightly lighter navy.
+  /// Deep navy card gradient (Total balance card & profile header)
   static const List<Color> gradientNavy = [
-    deepNavy,
-    navyLight,
+    Color(0xFF0B1F5E),
+    Color(0xFF071A52),
   ];
 
-  /// Accent gradient: Electric Cyan → Mint.
+  /// Deep navy gradient with vibrant accent
+  static const List<Color> gradientNavyGlow = [
+    Color(0xFF0F2B82),
+    Color(0xFF071A52),
+  ];
+
+  /// Royal Blue → Violet gradient
+  static const List<Color> gradientRoyalViolet = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+  ];
+
+  /// Primary button CTA gradient (Purple → Blue)
+  static const List<Color> gradientButton = [
+    Color(0xFF6366F1),
+    Color(0xFF8B5CF6),
+  ];
+
+  /// Welcome page sunset dusk sky gradient
+  static const List<Color> gradientWelcomeSky = [
+    Color(0xFF0A1128),
+    Color(0xFF1E2963),
+    Color(0xFF4C3075),
+    Color(0xFFA855F7),
+    Color(0xFFEC4899),
+    Color(0xFFFDBA74),
+  ];
+
+  /// Add Transaction header wavy gradient
+  static const List<Color> gradientAddTransactionHeader = [
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFFEC4899),
+    Color(0xFFFED7AA),
+  ];
+
+  /// Soft peach motivational card gradient: "Better habits, Build bigger dreams"
+  static const List<Color> gradientPeachBanner = [
+    Color(0xFFFFF1EB),
+    Color(0xFFFFE4DC),
+  ];
+
+  /// Soft sky motivational card gradient: "Dream Bigger, Plan Smarter, Achieve More"
+  static const List<Color> gradientSkyBanner = [
+    Color(0xFFE0F2FE),
+    Color(0xFFEDE9FE),
+  ];
+
+  /// Soft mint motivational card gradient: "Good finance builds freedom"
+  static const List<Color> gradientMintBanner = [
+    Color(0xFFE6FFFA),
+    Color(0xFFE0F2FE),
+  ];
+
+  /// Purple motivational quote card (Profile screen)
+  static const List<Color> gradientPurpleQuote = [
+    Color(0xFF4C1D95),
+    Color(0xFF6D28D9),
+  ];
+
+  /// Accent gradient (Electric Cyan → Mint)
   static const List<Color> gradientAccent = [
-    electricCyan,
-    mint,
+    Color(0xFF00D9FF),
+    Color(0xFF14B8A6),
   ];
 
-  /// Subtle card highlight gradient for light theme.
+  /// Light theme card subtle gradient
   static const List<Color> gradientCardLight = [
-    lightSurface,
-    lightSurface2,
+    Color(0xFFFFFFFF),
+    Color(0xFFF8FAFC),
   ];
 
-  /// Subtle card highlight gradient for dark theme.
+  /// Dark theme card subtle gradient
   static const List<Color> gradientCardDark = [
-    navyLight,
-    navyMid,
+    Color(0xFF0B1F5E),
+    Color(0xFF071A52),
   ];
 }

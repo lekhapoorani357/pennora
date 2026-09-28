@@ -168,17 +168,27 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                     padding: const EdgeInsets.all(AppDimensions.space24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          isDark ? AppColors.navyLight : const Color(0xFFEFF5FB),
-                          isDark ? AppColors.navyMid : const Color(0xFFF4F8FD),
-                        ],
+                        colors: isDark
+                            ? const [Color(0xFF071A52), Color(0xFF0F2B82), Color(0xFF2E1065)]
+                            : const [Color(0xFFEEF2FF), Color(0xFFF5F3FF), Color(0xFFFCE7F3)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: AppColors.electricCyan.withAlpha(60),
+                        color: isDark
+                            ? AppColors.navyBorder.withAlpha(120)
+                            : const Color(0xFFE0E7FF),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? const Color(0xFF0F2B82).withAlpha(80)
+                              : const Color(0xFF0F172A).withAlpha(8),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
@@ -186,13 +196,13 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.electricCyan.withAlpha(30),
+                            color: AppColors.violet.withAlpha(isDark ? 50 : 25),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             _categoryIcon(_goal.category),
                             size: 36,
-                            color: AppColors.electricCyan,
+                            color: AppColors.violet,
                           ),
                         ),
                         const SizedBox(height: AppDimensions.space12),
@@ -200,20 +210,28 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           _goal.name,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
                             color: isDark
                                 ? AppColors.textPrimaryDark
                                 : AppColors.textPrimaryLight,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          _goal.category.displayName,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.electricCyan,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.violet.withAlpha(20),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            _goal.category.displayName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.violet,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppDimensions.space20),
@@ -234,7 +252,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                                 fontWeight: FontWeight.w800,
                                 color: _goal.isCompleted
                                     ? AppColors.mint
-                                    : AppColors.electricCyan,
+                                    : AppColors.royalBlue,
                               ),
                             ),
                             _StatusBadge(goal: _goal),
@@ -262,12 +280,11 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           icon: const Icon(Icons.edit_rounded, size: 16),
                           label: const Text('Edit Goal'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.electricCyan,
+                            foregroundColor: AppColors.royalBlue,
                             side: const BorderSide(
-                                color: AppColors.electricCyan),
+                                color: AppColors.royalBlue, width: 1.5),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusMd),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             textStyle: const TextStyle(
@@ -282,12 +299,11 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           icon: const Icon(Icons.delete_rounded, size: 16),
                           label: const Text('Delete'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error.withAlpha(200),
+                            backgroundColor: AppColors.error.withAlpha(220),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusMd),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             textStyle: const TextStyle(

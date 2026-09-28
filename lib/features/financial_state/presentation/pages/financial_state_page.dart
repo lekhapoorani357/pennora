@@ -81,23 +81,24 @@ class _EmptyFinancialState extends StatelessWidget {
               height: 88,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: AppColors.gradientAccent,
+                  colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.electricCyan.withAlpha(60),
+                    color: const Color(0xFF8B5CF6).withAlpha(80),
                     blurRadius: 24,
-                    spreadRadius: 4,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.account_balance_wallet_rounded,
                 size: 40,
-                color: AppColors.deepNavy,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: AppDimensions.space24),
@@ -107,6 +108,7 @@ class _EmptyFinancialState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
@@ -125,26 +127,49 @@ class _EmptyFinancialState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppDimensions.space32),
-            SizedBox(
-              width: double.infinity,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF5A58EE),
+                    Color(0xFF835CF6),
+                    Color(0xFFA855F7),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF835CF6).withAlpha(90),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const FinancialOnboardingPage(),
                   ),
                 ),
-                icon: const Icon(Icons.add_link_rounded, size: 18),
-                label: const Text('Set Up Financial Profile'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricCyan,
-                  foregroundColor: AppColors.deepNavy,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                icon: const Icon(Icons.add_link_rounded, size: 18, color: Colors.white),
+                label: const Text(
+                  'Set Up Financial Profile',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 ),
               ),
             ),
@@ -251,21 +276,21 @@ class _FinancialStateBody extends StatelessWidget {
                       _ExpenseRow(
                         label: 'Fixed Expenses',
                         value: _fmt(profile.monthlyFixedExpenses),
-                        color: AppColors.electricCyan,
+                        color: const Color(0xFF3B82F6),
                         isDark: isDark,
                       ),
                       const Divider(height: AppDimensions.space16),
                       _ExpenseRow(
                         label: 'Variable Expenses',
                         value: _fmt(profile.monthlyVariableExpenses),
-                        color: AppColors.warning,
+                        color: const Color(0xFFF59E0B),
                         isDark: isDark,
                       ),
                       const Divider(height: AppDimensions.space16),
                       _ExpenseRow(
                         label: 'Loan / EMI',
                         value: _fmt(profile.existingLoanEmi),
-                        color: AppColors.error,
+                        color: const Color(0xFFF43F5E),
                         isDark: isDark,
                       ),
                     ],
@@ -371,11 +396,11 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 3,
+          width: 3.5,
           height: 16,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: AppColors.gradientAccent,
+              colors: [Color(0xFF5A58EE), Color(0xFF8B5CF6)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -388,10 +413,10 @@ class _SectionHeader extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            letterSpacing: 1.0,
+            letterSpacing: 1.1,
             color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
+                ? const Color(0xFF94A3B8)
+                : const Color(0xFF64748B),
           ),
         ),
       ],
@@ -410,17 +435,15 @@ class _Card extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+          color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withAlpha(30)
-                : Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withAlpha(isDark ? 30 : 8),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
           ),
         ],
       ),

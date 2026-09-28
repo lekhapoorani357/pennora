@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../goals/models/goal_model.dart';
+import '../../../goals/presentation/widgets/goal_progress_bar.dart';
 
 /// Compact row showing a goal commitment inside Financial State page.
 class GoalCommitmentRow extends StatelessWidget {
@@ -38,6 +39,7 @@ class GoalCommitmentRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight,
@@ -47,90 +49,82 @@ class GoalCommitmentRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.electricCyan.withAlpha(20),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                color: isDark
+                    ? const Color(0xFF8B5CF6).withAlpha(40)
+                    : const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: AppColors.electricCyan.withAlpha(60)),
+                  color: isDark
+                      ? const Color(0xFF8B5CF6).withAlpha(80)
+                      : const Color(0xFFC7D2FE),
+                ),
               ),
               child: Text(
                 goal.category.displayName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.electricCyan,
+                  color: isDark
+                      ? const Color(0xFFA78BFA)
+                      : const Color(0xFF4F46E5),
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppDimensions.space8),
+        const SizedBox(height: AppDimensions.space10),
         Row(
           children: [
             _AmountPill(
               label: 'Target',
               value: _fmt(goal.targetAmount),
-              color: AppColors.electricCyan,
+              color: const Color(0xFF3B82F6),
               isDark: isDark,
             ),
             const SizedBox(width: 8),
             _AmountPill(
               label: 'Saved',
               value: _fmt(goal.currentAmount),
-              color: AppColors.mint,
+              color: const Color(0xFF10B981),
               isDark: isDark,
             ),
             const SizedBox(width: 8),
             _AmountPill(
               label: 'Remaining',
               value: _fmt(goal.remainingAmount),
-              color: AppColors.warning,
+              color: const Color(0xFFF59E0B),
               isDark: isDark,
             ),
           ],
         ),
-        const SizedBox(height: AppDimensions.space8),
+        const SizedBox(height: AppDimensions.space10),
+        GoalProgressBar(fraction: goal.progressFraction),
+        const SizedBox(height: 6),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: goal.progressFraction,
-                  backgroundColor: isDark
-                      ? AppColors.navyMid
-                      : AppColors.lightSurfaceVariant,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    goal.isCompleted ? AppColors.mint : AppColors.electricCyan,
-                  ),
-                  minHeight: 5,
-                ),
+            Text(
+              'Target: ${_formatDate(goal.targetDate)}',
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
               ),
             ),
-            const SizedBox(width: 10),
             Text(
               goal.progressPercentage,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: goal.isCompleted
-                    ? AppColors.mint
-                    : AppColors.electricCyan,
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF3B82F6),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Target: ${_formatDate(goal.targetDate)}',
-          style: TextStyle(
-            fontSize: 11,
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
         ),
       ],
     );
@@ -154,11 +148,11 @@ class _AmountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          border: Border.all(color: color.withAlpha(50)),
+          color: color.withAlpha(isDark ? 30 : 15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withAlpha(isDark ? 60 : 40)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,12 +161,14 @@ class _AmountPill extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 9,
+                fontWeight: FontWeight.w600,
                 letterSpacing: 0.3,
                 color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
               ),
             ),
+            const SizedBox(height: 1),
             Text(
               value,
               style: TextStyle(

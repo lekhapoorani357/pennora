@@ -101,37 +101,45 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
     return Row(
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: AppColors.gradientAccent),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7C3AED).withAlpha(90),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: const Icon(Icons.auto_awesome_rounded,
-              size: 18, color: AppColors.deepNavy),
+              size: 22, color: Colors.white),
         ),
-        const SizedBox(width: AppDimensions.space10),
+        const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'AI Copilot',
+              'PENNORA AI',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
               ),
             ),
-            Text(
-              'MULTI-AGENT FINANCIAL INTELLIGENCE',
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: AppColors.electricCyan,
+            const Text(
+              'Your Personal Finance Assistant',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.purple,
               ),
             ),
           ],
@@ -139,18 +147,32 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
         const Spacer(),
         if (svc.isLoading)
           const SizedBox(
-            width: 16,
-            height: 16,
+            width: 18,
+            height: 18,
             child: CircularProgressIndicator(
-              color: AppColors.electricCyan,
-              strokeWidth: 2,
+              color: AppColors.royalBlue,
+              strokeWidth: 2.5,
             ),
           )
         else
           GestureDetector(
             onTap: () => svc.refresh(force: true),
-            child: const Icon(Icons.refresh_rounded,
-                size: 20, color: AppColors.electricCyan),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkSurfaceVariant
+                    : AppColors.lightSurfaceVariant,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.refresh_rounded,
+                size: 20,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
           ),
       ],
     );
@@ -899,20 +921,20 @@ class _InsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.space16),
+      padding: const EdgeInsets.all(AppDimensions.space18),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+          color: isDark ? AppColors.navyBorder.withAlpha(120) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withAlpha(30)
-                : Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+                ? Colors.black.withAlpha(35)
+                : const Color(0xFF0F172A).withAlpha(8),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
           ),
         ],
       ),

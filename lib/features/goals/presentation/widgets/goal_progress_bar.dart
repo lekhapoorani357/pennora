@@ -58,8 +58,12 @@ class _GoalProgressBarState extends State<GoalProgressBar>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final barColor = widget.color ??
-        (widget.fraction >= 1.0 ? AppColors.mint : AppColors.electricCyan);
+    final isCompleted = widget.fraction >= 1.0;
+    final List<Color> gradientColors = widget.color != null
+        ? [widget.color!, widget.color!.withAlpha(200)]
+        : (isCompleted
+            ? const [AppColors.mint, Color(0xFF34D399)]
+            : const [Color(0xFF2563EB), Color(0xFF7C3AED)]);
 
     return AnimatedBuilder(
       animation: _animation,
@@ -72,7 +76,7 @@ class _GoalProgressBarState extends State<GoalProgressBar>
               Container(
                 height: widget.height,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.navyMid : AppColors.lightSurfaceVariant,
+                  color: isDark ? AppColors.navyMid : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(widget.height),
                 ),
               ),
@@ -83,13 +87,13 @@ class _GoalProgressBarState extends State<GoalProgressBar>
                   height: widget.height,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [barColor, barColor.withAlpha(200)],
+                      colors: gradientColors,
                     ),
                     borderRadius: BorderRadius.circular(widget.height),
                     boxShadow: [
                       BoxShadow(
-                        color: barColor.withAlpha(80),
-                        blurRadius: 6,
+                        color: gradientColors.first.withAlpha(90),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],

@@ -301,7 +301,7 @@ class StepFinancialPosition extends StatelessWidget {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         borderSide: const BorderSide(
-          color: AppColors.electricCyan,
+          color: Color(0xFF6366F1),
           width: 1.5,
         ),
       ),

@@ -78,15 +78,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         title: const Text(
-          'Transactions',
+          'Activity & Money',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
             letterSpacing: -0.5,
           ),
         ),
-        backgroundColor:
-            isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        backgroundColor: Colors.transparent,
         foregroundColor: isDark
             ? AppColors.textPrimaryDark
             : AppColors.textPrimaryLight,
@@ -94,17 +93,31 @@ class _TransactionsPageState extends State<TransactionsPage> {
         actions: [
           IconButton(
             tooltip: 'Add Transaction',
-            icon: const Icon(Icons.add_rounded, size: 24),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF5A58EE), Color(0xFF835CF6)],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+            ),
             onPressed: () => _openAddTransactionModal(userId),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddTransactionModal(userId),
-        backgroundColor: AppColors.electricCyan,
-        foregroundColor: AppColors.deepNavy,
+        backgroundColor: AppColors.royalBlue,
+        foregroundColor: Colors.white,
         tooltip: 'Add Transaction',
-        child: const Icon(Icons.add_rounded),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text(
+          'Add Money',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -118,81 +131,94 @@ class _TransactionsPageState extends State<TransactionsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Overview Summary Bar
+                  // Overview Summary Hero Banner
                   Container(
-                    padding: const EdgeInsets.all(AppDimensions.space16),
+                    padding: const EdgeInsets.all(AppDimensions.space20),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.lightSurface,
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusLg),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.navyBorder
-                            : const Color(0xFFD6E4F0),
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF071A52),
+                          Color(0xFF0B1F5E),
+                          Color(0xFF1E1B4B),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark
-                              ? Colors.black.withAlpha(25)
-                              : Colors.black.withAlpha(6),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: const Color(0xFF071A52).withAlpha(100),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _SummaryMetric(
-                            label: 'Total Count',
-                            value: '$totalCount',
-                            color: AppColors.electricCyan,
-                            isDark: isDark,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'CASHFLOW SUMMARY',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.electricCyan,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$totalCount Transactions',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withAlpha(180),
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          width: 1,
-                          height: 36,
-                          color: isDark
-                              ? AppColors.navyBorder
-                              : const Color(0xFFE2ECF5),
-                        ),
-                        Expanded(
-                          child: _SummaryMetric(
-                            label: 'Total Outflow',
-                            value: _fmt(totalDebit),
-                            color: AppColors.error,
-                            isDark: isDark,
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 36,
-                          color: isDark
-                              ? AppColors.navyBorder
-                              : const Color(0xFFE2ECF5),
-                        ),
-                        Expanded(
-                          child: _SummaryMetric(
-                            label: 'Total Inflow',
-                            value: _fmt(totalCredit),
-                            color: AppColors.mint,
-                            isDark: isDark,
-                          ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _summaryBox(
+                                label: 'Total Inflow',
+                                value: _fmt(totalCredit),
+                                color: AppColors.mint,
+                                icon: Icons.arrow_downward_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _summaryBox(
+                                label: 'Total Outflow',
+                                value: _fmt(totalDebit),
+                                color: AppColors.pink,
+                                icon: Icons.arrow_upward_rounded,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space16),
+                  const SizedBox(height: AppDimensions.space20),
 
                   // Filter Row
                   if (allTransactions.isNotEmpty) ...[
                     Row(
                       children: [
                         Text(
-                          'RECENT TRANSACTIONS',
+                          'FILTER BY',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -210,7 +236,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         _filterChip('Credit', isDark),
                       ],
                     ),
-                    const SizedBox(height: AppDimensions.space12),
+                    const SizedBox(height: AppDimensions.space16),
                   ],
 
                   // Content: Empty State OR Transaction List
@@ -218,22 +244,23 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     _buildEmptyState(context, isDark, userId)
                   else if (filteredTransactions.isEmpty)
                     _buildNoFilterResults(isDark)
-                  else
+                  else ...[
                     ...filteredTransactions.map(
-                      (tx) => TransactionCard(
-                        transaction: tx,
+                      (t) => TransactionCard(
+                        transaction: t,
                         onTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) =>
-                                  TransactionDetailPage(transaction: tx),
+                                  TransactionDetailPage(transaction: t),
                             ),
                           );
                           if (mounted) setState(() {});
                         },
                       ),
                     ),
-                  const SizedBox(height: 80), // Padding for FAB
+                    const SizedBox(height: 80),
+                  ],
                 ],
               ),
             ),
@@ -243,33 +270,95 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _filterChip(String title, bool isDark) {
-    final isSelected = _selectedFilter == title;
-    return InkWell(
-      onTap: () => setState(() => _selectedFilter = title),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+  Widget _summaryBox({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withAlpha(30),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withAlpha(180),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip(String filter, bool isDark) {
+    final isSelected = _selectedFilter == filter;
+    final label = filter == 'Debit'
+        ? 'Outflow'
+        : filter == 'Credit'
+            ? 'Inflow'
+            : 'All';
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = filter),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.electricCyan
+              ? AppColors.royalBlue
               : (isDark
                   ? AppColors.darkSurfaceVariant
                   : AppColors.lightSurfaceVariant),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppColors.electricCyan
-                : (isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0)),
+                ? AppColors.royalBlue
+                : (isDark
+                    ? AppColors.navyBorder.withAlpha(80)
+                    : const Color(0xFFE2E8F0)),
           ),
         ),
         child: Text(
-          title,
+          label,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
             color: isSelected
-                ? AppColors.deepNavy
+                ? Colors.white
                 : (isDark
                     ? AppColors.textSecondaryDark
                     : AppColors.textSecondaryLight),
@@ -279,79 +368,83 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _buildEmptyState(
-      BuildContext context, bool isDark, String userId) {
+  Widget _buildEmptyState(BuildContext context, bool isDark, String userId) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.space24,
-        vertical: AppDimensions.space32,
+        vertical: AppDimensions.space40,
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+          color: isDark
+              ? AppColors.navyBorder.withAlpha(100)
+              : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.navyMid : const Color(0xFFE8F3FA),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
+              ),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2563EB).withAlpha(80),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              size: 32,
-              color: isDark ? AppColors.electricCyan : const Color(0xFF0096B4),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              size: 36,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: AppDimensions.space16),
+          const SizedBox(height: AppDimensions.space20),
           Text(
-            'No transactions yet',
+            'No Transactions Recorded',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
             ),
           ),
           const SizedBox(height: AppDimensions.space8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
-            child: Text(
-              'Transactions will appear when financial data is connected.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                height: 1.4,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+          Text(
+            'Start by adding your income or expenses to track real-time money movements.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
           ),
-          const SizedBox(height: AppDimensions.space20),
+          const SizedBox(height: AppDimensions.space24),
           ElevatedButton.icon(
             onPressed: () => _openAddTransactionModal(userId),
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: const Text('Add Transaction'),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Add Your First Transaction'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.electricCyan,
-              foregroundColor: AppColors.deepNavy,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              backgroundColor: AppColors.royalBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                borderRadius: BorderRadius.circular(16),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
               ),
             ),
           ),
@@ -365,7 +458,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
       padding: const EdgeInsets.all(AppDimensions.space24),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark
+              ? AppColors.navyBorder.withAlpha(80)
+              : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Center(
         child: Text(
@@ -382,49 +480,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 }
 
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final bool isDark;
-
-  const _SummaryMetric({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Modal bottom sheet for adding or editing a transaction.
+// ─────────────────────────────────────────────────────────────
+// Add / Edit Transaction Modal with Reference Aesthetic
+// ─────────────────────────────────────────────────────────────
 class AddEditTransactionModal extends StatefulWidget {
   final String userId;
   final TransactionModel? initialTransaction;
@@ -481,6 +539,19 @@ class _AddEditTransactionModalState extends State<AddEditTransactionModal> {
     super.dispose();
   }
 
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(now.year - 5),
+      lastDate: now.add(const Duration(days: 30)),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -530,6 +601,14 @@ class _AddEditTransactionModalState extends State<AddEditTransactionModal> {
     }
   }
 
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -538,256 +617,398 @@ class _AddEditTransactionModalState extends State<AddEditTransactionModal> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.only(
-        top: AppDimensions.space20,
-        left: AppDimensions.pagePaddingH,
-        right: AppDimensions.pagePaddingH,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Text(
-                    isEdit ? 'Edit Transaction' : 'Add Transaction',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Gradient Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF7C3AED), Color(0xFFEC4899)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: AppDimensions.space12),
-
-              if (_errorMessage != null) ...[
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Row(
+              children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withAlpha(20),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.error.withAlpha(60)),
+                    color: Colors.white.withAlpha(30),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: const Icon(Icons.receipt_long_rounded,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  isEdit ? 'Edit Transaction' : 'Record Transaction',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.3,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.space12),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(30),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded,
+                        color: Colors.white, size: 18),
+                  ),
+                ),
               ],
-
-              // Type Selector: Debit / Credit
-              Row(
-                children: [
-                  Expanded(
-                    child: _typeButton(
-                      title: 'Debit (Outflow)',
-                      type: TransactionType.debit,
-                      activeColor: AppColors.error,
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.space10),
-                  Expanded(
-                    child: _typeButton(
-                      title: 'Credit (Inflow)',
-                      type: TransactionType.credit,
-                      activeColor: AppColors.mint,
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.space16),
-
-              // Amount Field
-              TextFormField(
-                controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Amount (₹)',
-                  prefixIcon: const Icon(Icons.currency_rupee_rounded, size: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                ),
-                validator: (val) {
-                  final parsed = double.tryParse(val?.trim() ?? '');
-                  if (parsed == null || parsed <= 0) {
-                    return 'Enter a valid amount greater than 0.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppDimensions.space12),
-
-              // Merchant Field
-              TextFormField(
-                controller: _merchantController,
-                decoration: InputDecoration(
-                  labelText: 'Merchant Name',
-                  prefixIcon: const Icon(Icons.storefront_outlined, size: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Merchant name is required.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppDimensions.space12),
-
-              // Category Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _category,
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  prefixIcon: const Icon(Icons.category_outlined, size: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                ),
-                items: TransactionCategories.all.map((cat) {
-                  return DropdownMenuItem(
-                    value: cat,
-                    child: Text(cat),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _category = val);
-                },
-              ),
-              const SizedBox(height: AppDimensions.space12),
-
-              // Payment Method Dropdown
-              DropdownButtonFormField<PaymentMethod>(
-                initialValue: _paymentMethod,
-                decoration: InputDecoration(
-                  labelText: 'Payment Method',
-                  prefixIcon: const Icon(Icons.payment_outlined, size: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                ),
-                items: PaymentMethod.values.map((method) {
-                  return DropdownMenuItem(
-                    value: method,
-                    child: Text(method.displayName),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _paymentMethod = val);
-                },
-              ),
-              const SizedBox(height: AppDimensions.space12),
-
-              // Notes Field
-              TextFormField(
-                controller: _notesController,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  prefixIcon: const Icon(Icons.notes_outlined, size: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimensions.space20),
-
-              // Submit Button
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricCyan,
-                  foregroundColor: AppColors.deepNavy,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(AppColors.deepNavy),
-                        ),
-                      )
-                    : Text(isEdit ? 'Save Changes' : 'Add Transaction'),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_errorMessage != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withAlpha(20),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: AppColors.error.withAlpha(80)),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.space16),
+                    ],
+
+                    // Segmented Type Selector: Outflow / Inflow
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceVariant
+                            : AppColors.lightSurfaceVariant,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _typeSegment(
+                              title: 'Outflow (Expense)',
+                              type: TransactionType.debit,
+                              activeColor: AppColors.pink,
+                              icon: Icons.arrow_upward_rounded,
+                              isDark: isDark,
+                            ),
+                          ),
+                          Expanded(
+                            child: _typeSegment(
+                              title: 'Inflow (Income)',
+                              type: TransactionType.credit,
+                              activeColor: AppColors.mint,
+                              icon: Icons.arrow_downward_rounded,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.space16),
+
+                    // Amount Input
+                    TextFormField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount',
+                        prefixIcon: const Icon(Icons.currency_rupee_rounded,
+                            size: 22),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      validator: (val) {
+                        final parsed = double.tryParse(val?.trim() ?? '');
+                        if (parsed == null || parsed <= 0) {
+                          return 'Enter a valid amount greater than 0.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.space14),
+
+                    // Merchant Field
+                    TextFormField(
+                      controller: _merchantController,
+                      decoration: InputDecoration(
+                        labelText: 'Merchant or Source',
+                        prefixIcon: const Icon(Icons.storefront_outlined,
+                            size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Merchant or source name is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.space14),
+
+                    // Category Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: _category,
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        prefixIcon: const Icon(Icons.category_outlined,
+                            size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      items: TransactionCategories.all.map((cat) {
+                        return DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _category = val);
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.space14),
+
+                    // Payment Method & Date in a Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<PaymentMethod>(
+                            initialValue: _paymentMethod,
+                            decoration: InputDecoration(
+                              labelText: 'Method',
+                              prefixIcon: const Icon(Icons.payment_outlined,
+                                  size: 18),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            items: PaymentMethod.values.map((method) {
+                              return DropdownMenuItem(
+                                value: method,
+                                child: Text(method.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _paymentMethod = val);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _pickDate,
+                            child: Container(
+                              height: 56,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkSurfaceVariant
+                                    : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.navyBorder
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_rounded,
+                                      size: 18, color: AppColors.royalBlue),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _formatDate(_selectedDate),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? AppColors.textPrimaryDark
+                                            : AppColors.textPrimaryLight,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimensions.space14),
+
+                    // Notes Field
+                    TextFormField(
+                      controller: _notesController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: 'Notes (Optional)',
+                        prefixIcon: const Icon(Icons.notes_outlined, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.space24),
+
+                    // CTA Submit Button
+                    Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF5A58EE),
+                            Color(0xFF835CF6),
+                            Color(0xFFA855F7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(27),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF7C3AED).withAlpha(100),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(27),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                isEdit ? 'Save Changes' : 'Record Transaction',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _typeButton({
+  Widget _typeSegment({
     required String title,
     required TransactionType type,
     required Color activeColor,
+    required IconData icon,
     required bool isDark,
   }) {
     final isSelected = _type == type;
-    return InkWell(
+    return GestureDetector(
       onTap: () => setState(() => _type = type),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withAlpha(35)
-              : (isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurfaceVariant),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          border: Border.all(
-            color: isSelected
-                ? activeColor
-                : (isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0)),
-            width: isSelected ? 1.5 : 1.0,
-          ),
+          color: isSelected ? activeColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withAlpha(80),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         alignment: Alignment.center,
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isSelected
-                ? activeColor
-                : (isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight),
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -353,18 +353,27 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
         title: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: AppColors.gradientAccent,
+                  colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF8B5CF6).withAlpha(80),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: const Icon(
-                Icons.hub_rounded,
-                size: 18,
-                color: AppColors.deepNavy,
+                Icons.spa_rounded,
+                size: 20,
+                color: Colors.white,
               ),
             ),
             const SizedBox(width: AppDimensions.space10),
@@ -385,10 +394,10 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                 const Text(
                   'FINANCIAL ONBOARDING',
                   style: TextStyle(
-                    fontSize: 8,
+                    fontSize: 8.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
-                    color: AppColors.electricCyan,
+                    color: Color(0xFF8B5CF6),
                   ),
                 ),
               ],
@@ -566,18 +575,20 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: AppColors.gradientAccent,
+                              colors: [
+                                Color(0xFF5A58EE),
+                                Color(0xFF835CF6),
+                                Color(0xFFA855F7),
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radiusMd,
-                            ),
+                            borderRadius: BorderRadius.circular(28),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.electricCyan.withAlpha(80),
-                                blurRadius: 14,
-                                offset: const Offset(0, 3),
+                                color: const Color(0xFF835CF6).withAlpha(90),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -588,9 +599,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                               shadowColor: Colors.transparent,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusMd,
-                                ),
+                                borderRadius: BorderRadius.circular(28),
                               ),
                             ),
                             child: _isSubmitting
@@ -600,7 +609,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.deepNavy,
+                                        Colors.white,
                                       ),
                                     ),
                                   )
@@ -614,7 +623,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                                         style: const TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.deepNavy,
+                                          color: Colors.white,
                                           letterSpacing: 0.2,
                                         ),
                                       ),
@@ -623,7 +632,7 @@ class _FinancialOnboardingPageState extends State<FinancialOnboardingPage> {
                                         _currentStep == 3
                                             ? Icons.check_circle_outline_rounded
                                             : Icons.arrow_forward_rounded,
-                                        color: AppColors.deepNavy,
+                                        color: Colors.white,
                                         size: 18,
                                       ),
                                     ],

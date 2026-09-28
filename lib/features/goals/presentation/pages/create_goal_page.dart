@@ -245,31 +245,52 @@ class _CreateGoalPageState extends State<CreateGoalPage> {
                     const SizedBox(height: AppDimensions.space32),
 
                     // Submit button
-                    SizedBox(
-                      height: 52,
+                    Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF5A58EE),
+                            Color(0xFF835CF6),
+                            Color(0xFFA855F7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(27),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF7C3AED).withAlpha(90),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.electricCyan,
-                          foregroundColor: AppColors.deepNavy,
-                          elevation: 0,
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusMd),
+                            borderRadius: BorderRadius.circular(27),
                           ),
                           textStyle: const TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 16),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.deepNavy,
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
                                 ),
                               )
-                            : Text(_isEditing ? 'Save Changes' : 'Create Goal'),
+                            : Text(
+                                _isEditing ? 'Save Changes' : 'Create Goal',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.space24),

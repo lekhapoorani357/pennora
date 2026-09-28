@@ -8,7 +8,9 @@ import '../widgets/goal_card.dart';
 import 'create_goal_page.dart';
 import 'goal_detail_page.dart';
 
-/// Full Goals tab page.
+/// Full Goals tab page redesigned as a visual "Financial Journey".
+///
+/// Retains all existing service bindings, creation, and detail flows.
 class GoalsPage extends StatefulWidget {
   const GoalsPage({super.key});
 
@@ -17,6 +19,8 @@ class GoalsPage extends StatefulWidget {
 }
 
 class _GoalsPageState extends State<GoalsPage> {
+  String _selectedFilter = 'All'; // 'All', 'Active', 'Completed'
+
   @override
   void initState() {
     super.initState();
@@ -33,27 +37,45 @@ class _GoalsPageState extends State<GoalsPage> {
     super.dispose();
   }
 
-  void _onGoalsChanged() => setState(() {});
+  void _onGoalsChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _openCreateGoal() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const CreateGoalPage()),
     );
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future<void> _openGoalDetail(GoalModel goal) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => GoalDetailPage(goal: goal)),
     );
-    setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  String _fmt(double v) {
+    if (v >= 10000000) return '₹${(v / 10000000).toStringAsFixed(1)}Cr';
+    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
+    return '₹${v.toStringAsFixed(0)}';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = AuthService.instance.currentUser?.id ?? '';
-    final goals = GoalService.instance.getGoalsForUser(userId);
+    final allGoals = GoalService.instance.getGoalsForUser(userId);
+
+    final filteredGoals = allGoals.where((g) {
+      if (_selectedFilter == 'Active') return !g.isCompleted;
+      if (_selectedFilter == 'Completed') return g.isCompleted;
+      return true;
+    }).toList();
+
+    final totalSaved = allGoals.fold<double>(0, (sum, g) => sum + g.currentAmount);
+    final totalTarget = allGoals.fold<double>(0, (sum, g) => sum + g.targetAmount);
 
     return Scaffold(
       backgroundColor:
@@ -70,7 +92,7 @@ class _GoalsPageState extends State<GoalsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Header ─────────────────────────────────────
+                  // ── Top Bar ─────────────────────────────────────────────
                   Row(
                     children: [
                       Expanded(
@@ -78,10 +100,10 @@ class _GoalsPageState extends State<GoalsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your Goals',
+                              'Goals Journey',
                               style: TextStyle(
                                 fontSize: 26,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -90,10 +112,9 @@ class _GoalsPageState extends State<GoalsPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Pennora tracks your progress and adapts goals as your financial conditions change.',
+                              'Dream bigger, plan smarter, and achieve more.',
                               style: TextStyle(
                                 fontSize: 13,
-                                height: 1.4,
                                 color: isDark
                                     ? AppColors.textSecondaryDark
                                     : AppColors.textSecondaryLight,
@@ -102,70 +123,264 @@ class _GoalsPageState extends State<GoalsPage> {
                           ],
                         ),
                       ),
-                      if (goals.isNotEmpty)
-                        _AddGoalFAB(onTap: _openCreateGoal, compact: true),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimensions.space24),
-
-                  // ── Content ────────────────────────────────────
-                  if (goals.isEmpty)
-                    _EmptyGoalsState(onCreateGoal: _openCreateGoal)
-                  else ...[
-                    // Summary chip
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.electricCyan.withAlpha(20),
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusMd),
-                        border: Border.all(
-                            color: AppColors.electricCyan.withAlpha(60)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.flag_rounded,
-                              size: 14, color: AppColors.electricCyan),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${goals.length} ${goals.length == 1 ? "goal" : "goals"} active',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.electricCyan,
+                      if (allGoals.isNotEmpty)
+                        GestureDetector(
+                          onTap: _openCreateGoal,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF5A58EE),
+                                  Color(0xFF835CF6),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF7C3AED).withAlpha(80),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_rounded,
+                                    size: 18, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text(
+                                  'New Goal',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            '${goals.where((g) => g.isCompleted).length} completed',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                            ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimensions.space20),
+
+                  // ── Financial Journey Hero Banner ───────────────────────
+                  if (allGoals.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppDimensions.space20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF071A52),
+                            Color(0xFF0F2B82),
+                            Color(0xFF2E1065),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F2B82).withAlpha(100),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(25),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'JOURNEY OVERVIEW',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.electricCyan,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${allGoals.where((g) => g.isCompleted).length}/${allGoals.length} Achieved',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Saved',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white.withAlpha(180),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _fmt(totalSaved),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.mint,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Total Target',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white.withAlpha(180),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _fmt(totalTarget),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.space16),
+                    const SizedBox(height: AppDimensions.space20),
 
-                    // Goal cards
-                    ...goals.map(
+                    // ── Filter Pills ─────────────────────────────────────
+                    Row(
+                      children: [
+                        _filterPill('All (${allGoals.length})', 'All', isDark),
+                        const SizedBox(width: 8),
+                        _filterPill(
+                            'Active (${allGoals.where((g) => !g.isCompleted).length})',
+                            'Active',
+                            isDark),
+                        const SizedBox(width: 8),
+                        _filterPill(
+                            'Completed (${allGoals.where((g) => g.isCompleted).length})',
+                            'Completed',
+                            isDark),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimensions.space16),
+                  ],
+
+                  // ── Content ────────────────────────────────────────────
+                  if (allGoals.isEmpty)
+                    _EmptyGoalsState(onCreateGoal: _openCreateGoal)
+                  else if (filteredGoals.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Text(
+                          'No $_selectedFilter goals found.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    ...filteredGoals.map(
                       (g) => GoalCard(
                         goal: g,
                         onTap: () => _openGoalDetail(g),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.space16),
-
-                    // Bottom add button
-                    _AddGoalFAB(onTap: _openCreateGoal, compact: false),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _openCreateGoal,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Add Another Goal'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.violet,
+                          side: const BorderSide(color: AppColors.violet),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 14),
+                        ),
+                      ),
+                    ),
                   ],
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterPill(String title, String value, bool isDark) {
+    final isSelected = _selectedFilter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.violet
+              : (isDark
+                  ? AppColors.darkSurfaceVariant
+                  : AppColors.lightSurfaceVariant),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.violet
+                : (isDark
+                    ? AppColors.navyBorder.withAlpha(80)
+                    : const Color(0xFFE2E8F0)),
+          ),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : (isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight),
           ),
         ),
       ),
@@ -183,20 +398,20 @@ class _EmptyGoalsState extends StatelessWidget {
 
     return Column(
       children: [
-        const SizedBox(height: AppDimensions.space40),
+        const SizedBox(height: AppDimensions.space32),
         Container(
           width: 88,
           height: 88,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: AppColors.gradientAccent,
+              colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.electricCyan.withAlpha(60),
+                color: const Color(0xFF7C3AED).withAlpha(80),
                 blurRadius: 24,
                 spreadRadius: 4,
               ),
@@ -205,21 +420,22 @@ class _EmptyGoalsState extends StatelessWidget {
           child: const Icon(
             Icons.flag_rounded,
             size: 40,
-            color: AppColors.deepNavy,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: AppDimensions.space24),
         Text(
-          'No Goals Yet',
+          'Start Your Financial Journey',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color:
+                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
           ),
         ),
-        const SizedBox(height: AppDimensions.space12),
+        const SizedBox(height: AppDimensions.space10),
         Text(
-          "Goals are the foundation of Pennora's financial conflict analysis. Create your first goal so the system can begin tracking your progress and detecting future conflicts.",
+          "Goals are the foundation of Pennora's intelligence engine. Create a goal to track your milestone targets and keep your future aligned.",
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
@@ -229,69 +445,49 @@ class _EmptyGoalsState extends StatelessWidget {
                 : AppColors.textSecondaryLight,
           ),
         ),
-        const SizedBox(height: AppDimensions.space32),
-        SizedBox(
+        const SizedBox(height: AppDimensions.space28),
+        Container(
           width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF5A58EE),
+                Color(0xFF835CF6),
+                Color(0xFFA855F7),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7C3AED).withAlpha(90),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: ElevatedButton.icon(
             onPressed: onCreateGoal,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Create Your First Goal'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.electricCyan,
-              foregroundColor: AppColors.deepNavy,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+            label: const Text(
+              'Create Your First Goal',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: Colors.white,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              textStyle:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26),
+              ),
             ),
           ),
         ),
         const SizedBox(height: AppDimensions.space40),
       ],
-    );
-  }
-}
-
-class _AddGoalFAB extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool compact;
-  const _AddGoalFAB({required this.onTap, required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    if (compact) {
-      return GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: AppColors.gradientAccent),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          child: const Icon(Icons.add_rounded,
-              size: 20, color: AppColors.deepNavy),
-        ),
-      );
-    }
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.add_rounded, size: 18),
-        label: const Text('Add Another Goal'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.electricCyan,
-          side: const BorderSide(color: AppColors.electricCyan),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-      ),
     );
   }
 }

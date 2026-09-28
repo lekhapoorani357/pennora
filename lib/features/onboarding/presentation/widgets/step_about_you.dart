@@ -144,25 +144,25 @@ class StepAboutYou extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                              ? AppColors.navyMid
-                              : const Color(0xFFF0F9FF))
+                              ? const Color(0xFF6366F1).withAlpha(30)
+                              : const Color(0xFFEEF2FF))
                           : (isDark
                               ? AppColors.darkSurface
                               : AppColors.lightSurface),
                       borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusMd),
+                          BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.electricCyan
+                            ? const Color(0xFF6366F1)
                             : (isDark
                                 ? AppColors.navyBorder
-                                : const Color(0xFFD6E4F0)),
+                                : const Color(0xFFE2E8F0)),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.electricCyan.withAlpha(35),
+                                color: const Color(0xFF6366F1).withAlpha(30),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -175,7 +175,7 @@ class StepAboutYou extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.electricCyan.withAlpha(40)
+                                ? const Color(0xFF6366F1).withAlpha(35)
                                 : (isDark
                                     ? AppColors.navyMid
                                     : AppColors.lightSurfaceVariant),
@@ -186,7 +186,7 @@ class StepAboutYou extends StatelessWidget {
                             occ.icon,
                             size: 20,
                             color: isSelected
-                                ? AppColors.electricCyan
+                                ? const Color(0xFF6366F1)
                                 : (isDark
                                     ? AppColors.textSecondaryDark
                                     : AppColors.textSecondaryLight),
@@ -225,7 +225,7 @@ class StepAboutYou extends StatelessWidget {
                               : Icons.radio_button_unchecked_rounded,
                           size: 20,
                           color: isSelected
-                              ? AppColors.electricCyan
+                              ? const Color(0xFF6366F1)
                               : (isDark
                                   ? AppColors.textTertiaryDark
                                   : AppColors.textTertiaryLight),
@@ -287,20 +287,29 @@ class StepAboutYou extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.electricCyan
+                            ? const Color(0xFF6366F1)
                             : (isDark
                                 ? AppColors.darkSurface
                                 : AppColors.lightSurface),
                         borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusMd),
+                            BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.electricCyan
+                              ? const Color(0xFF6366F1)
                               : (isDark
                                   ? AppColors.navyBorder
-                                  : const Color(0xFFD6E4F0)),
+                                  : const Color(0xFFE2E8F0)),
                           width: isSelected ? 1.5 : 1.0,
                         ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF6366F1).withAlpha(80),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Center(
                         child: Text(
@@ -309,7 +318,7 @@ class StepAboutYou extends StatelessWidget {
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: isSelected
-                                ? AppColors.deepNavy
+                                ? Colors.white
                                 : (isDark
                                     ? AppColors.textPrimaryDark
                                     : AppColors.textPrimaryLight),

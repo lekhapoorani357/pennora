@@ -26,6 +26,10 @@ class _ExpenseBreakdownChartState extends State<ExpenseBreakdownChart>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  static const Color fixedColor = Color(0xFF3B82F6);
+  static const Color variableColor = Color(0xFFF59E0B);
+  static const Color loanColor = Color(0xFFF43F5E);
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +56,7 @@ class _ExpenseBreakdownChartState extends State<ExpenseBreakdownChart>
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.space8),
         child: Text(
-          'No expense data.',
+          'No expense data recorded.',
           style: TextStyle(
             fontSize: 13,
             color: widget.isDark
@@ -75,25 +79,25 @@ class _ExpenseBreakdownChartState extends State<ExpenseBreakdownChart>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(8),
               child: SizedBox(
-                height: 16,
+                height: 14,
                 child: Row(
                   children: [
                     if (fixedFrac > 0)
                       Flexible(
                         flex: (fixedFrac * animated * 1000).round().clamp(1, 100000),
-                        child: Container(color: AppColors.electricCyan),
+                        child: Container(color: fixedColor),
                       ),
                     if (varFrac > 0)
                       Flexible(
                         flex: (varFrac * animated * 1000).round().clamp(1, 100000),
-                        child: Container(color: AppColors.warning),
+                        child: Container(color: variableColor),
                       ),
                     if (loanFrac > 0)
                       Flexible(
                         flex: (loanFrac * animated * 1000).round().clamp(1, 100000),
-                        child: Container(color: AppColors.error),
+                        child: Container(color: loanColor),
                       ),
                     if (animated < 1.0)
                       Flexible(
@@ -101,7 +105,7 @@ class _ExpenseBreakdownChartState extends State<ExpenseBreakdownChart>
                         child: Container(
                           color: widget.isDark
                               ? AppColors.navyMid
-                              : AppColors.lightSurfaceVariant,
+                              : const Color(0xFFF1F5F9),
                         ),
                       ),
                   ],
@@ -114,17 +118,17 @@ class _ExpenseBreakdownChartState extends State<ExpenseBreakdownChart>
               runSpacing: 6,
               children: [
                 _LegendItem(
-                    color: AppColors.electricCyan,
-                    label:
-                        'Fixed (${(fixedFrac * 100).toStringAsFixed(0)}%)'),
+                  color: fixedColor,
+                  label: 'Fixed (${(fixedFrac * 100).toStringAsFixed(0)}%)',
+                ),
                 _LegendItem(
-                    color: AppColors.warning,
-                    label:
-                        'Variable (${(varFrac * 100).toStringAsFixed(0)}%)'),
+                  color: variableColor,
+                  label: 'Variable (${(varFrac * 100).toStringAsFixed(0)}%)',
+                ),
                 _LegendItem(
-                    color: AppColors.error,
-                    label:
-                        'Loan/EMI (${(loanFrac * 100).toStringAsFixed(0)}%)'),
+                  color: loanColor,
+                  label: 'Loan/EMI (${(loanFrac * 100).toStringAsFixed(0)}%)',
+                ),
               ],
             ),
           ],
@@ -146,18 +150,19 @@ class _LegendItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
+            fontWeight: FontWeight.w600,
             color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
+                ? const Color(0xFF94A3B8)
+                : const Color(0xFF64748B),
           ),
         ),
       ],

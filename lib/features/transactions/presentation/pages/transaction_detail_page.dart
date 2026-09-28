@@ -292,21 +292,42 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
                   const SizedBox(height: AppDimensions.space24),
 
                   // Edit button
-                  ElevatedButton.icon(
-                    onPressed: _onEditTapped,
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit Transaction'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.electricCyan,
-                      foregroundColor: AppColors.deepNavy,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusMd),
+                  Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF5A58EE),
+                          Color(0xFF835CF6),
+                          Color(0xFFA855F7),
+                        ],
                       ),
-                      textStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF7C3AED).withAlpha(90),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: _onEditTapped,
+                      icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.white),
+                      label: const Text(
+                        'Edit Transaction',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
                       ),
                     ),
                   ),

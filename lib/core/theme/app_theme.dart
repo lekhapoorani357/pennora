@@ -5,19 +5,10 @@ import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import 'app_typography.dart';
 
-/// GoalSync centralized theme configuration.
+/// Pennora centralized theme configuration.
 ///
-/// Provides [lightTheme] and [darkTheme] that share the same brand identity
-/// (Deep Navy, Electric Cyan, Mint) while feeling native to each brightness.
-///
-/// Usage:
-/// ```dart
-/// MaterialApp(
-///   theme: AppTheme.lightTheme,
-///   darkTheme: AppTheme.darkTheme,
-///   themeMode: ThemeMode.system,
-/// )
-/// ```
+/// Designed to match the modern Pennora visual language:
+/// Deep Navy, Royal Blue, Violet, Soft Pink, Lavender, and Mint.
 abstract final class AppTheme {
   // ─────────────────────────────────────────────────────────────
   // Color Schemes
@@ -26,63 +17,63 @@ abstract final class AppTheme {
   static ColorScheme get _lightColorScheme => const ColorScheme(
         brightness: Brightness.light,
         // Primary
-        primary: AppColors.electricCyan,
-        onPrimary: AppColors.deepNavy,
-        primaryContainer: AppColors.cyanGlow,
+        primary: AppColors.royalBlue,
+        onPrimary: Colors.white,
+        primaryContainer: AppColors.lavender,
         onPrimaryContainer: AppColors.deepNavy,
         // Secondary
-        secondary: AppColors.mint,
-        onSecondary: AppColors.deepNavy,
-        secondaryContainer: AppColors.mintGlow,
+        secondary: AppColors.purple,
+        onSecondary: Colors.white,
+        secondaryContainer: AppColors.lavender,
         onSecondaryContainer: AppColors.deepNavy,
         // Tertiary
-        tertiary: AppColors.deepNavy,
-        onTertiary: AppColors.lightSurface,
-        tertiaryContainer: AppColors.lightSurfaceVariant,
-        onTertiaryContainer: AppColors.deepNavy,
+        tertiary: AppColors.mint,
+        onTertiary: Colors.white,
+        tertiaryContainer: AppColors.mintLight,
+        onTertiaryContainer: AppColors.mintDark,
         // Error
         error: AppColors.error,
         onError: Colors.white,
-        errorContainer: Color(0xFFFFDADE),
-        onErrorContainer: Color(0xFF410014),
-        // Surface
+        errorContainer: AppColors.errorLight,
+        onErrorContainer: Color(0xFF991B1B),
+        // Surface & Background
         surface: AppColors.lightSurface,
         onSurface: AppColors.textPrimaryLight,
         surfaceContainerHighest: AppColors.lightSurfaceVariant,
         onSurfaceVariant: AppColors.textSecondaryLight,
         // Outline
-        outline: Color(0xFFBBD0E0),
-        outlineVariant: Color(0xFFD8E8F2),
+        outline: AppColors.lightBorder,
+        outlineVariant: Color(0xFFF1F5F9),
         // Misc
-        shadow: AppColors.deepNavy,
-        scrim: AppColors.deepNavy,
+        shadow: Color(0x0D0F172A),
+        scrim: Colors.black54,
         inverseSurface: AppColors.deepNavy,
         onInverseSurface: AppColors.textPrimaryDark,
-        inversePrimary: AppColors.electricCyan,
+        inversePrimary: AppColors.purpleLight,
       );
 
   static ColorScheme get _darkColorScheme => const ColorScheme(
         brightness: Brightness.dark,
         // Primary
-        primary: AppColors.electricCyan,
+        primary: AppColors.purpleLight,
         onPrimary: AppColors.deepNavy,
-        primaryContainer: AppColors.navyMid,
-        onPrimaryContainer: AppColors.electricCyan,
+        primaryContainer: AppColors.deepNavyLighter,
+        onPrimaryContainer: AppColors.purpleLight,
         // Secondary
         secondary: AppColors.mint,
         onSecondary: AppColors.deepNavy,
-        secondaryContainer: AppColors.navyMid,
+        secondaryContainer: AppColors.deepNavyLighter,
         onSecondaryContainer: AppColors.mint,
         // Tertiary
-        tertiary: AppColors.lightSurface,
+        tertiary: AppColors.electricCyan,
         onTertiary: AppColors.deepNavy,
-        tertiaryContainer: AppColors.navyLight,
-        onTertiaryContainer: AppColors.textPrimaryDark,
+        tertiaryContainer: AppColors.deepNavyDarker,
+        onTertiaryContainer: AppColors.electricCyan,
         // Error
         error: AppColors.error,
-        onError: AppColors.deepNavy,
-        errorContainer: Color(0xFF93000A),
-        onErrorContainer: Color(0xFFFFDADE),
+        onError: Colors.white,
+        errorContainer: Color(0xFF7F1D1D),
+        onErrorContainer: AppColors.errorLight,
         // Surface
         surface: AppColors.darkSurface,
         onSurface: AppColors.textPrimaryDark,
@@ -90,13 +81,13 @@ abstract final class AppTheme {
         onSurfaceVariant: AppColors.textSecondaryDark,
         // Outline
         outline: AppColors.navyBorder,
-        outlineVariant: AppColors.navyMid,
+        outlineVariant: AppColors.deepNavyLighter,
         // Misc
         shadow: Colors.black,
-        scrim: Colors.black,
+        scrim: Colors.black87,
         inverseSurface: AppColors.lightSurface,
         onInverseSurface: AppColors.textPrimaryLight,
-        inversePrimary: AppColors.cyanDark,
+        inversePrimary: AppColors.royalBlue,
       );
 
   // ─────────────────────────────────────────────────────────────
@@ -144,32 +135,34 @@ abstract final class AppTheme {
         foregroundColor:
             isLight ? AppColors.textPrimaryLight : AppColors.textPrimaryDark,
         elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: isLight
-            ? AppColors.electricCyan.withAlpha(30)
-            : AppColors.electricCyan.withAlpha(20),
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: isLight
-            ? AppTypography.lightTextTheme.titleLarge
-            : AppTypography.darkTextTheme.titleLarge,
+            ? AppTypography.lightTextTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimaryLight,
+              )
+            : AppTypography.darkTextTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimaryDark,
+              ),
         surfaceTintColor: Colors.transparent,
       ),
 
       // ── Card ─────────────────────────────────────────────────
       cardTheme: CardThemeData(
         color: isLight ? AppColors.lightSurface : AppColors.darkSurface,
-        elevation: AppDimensions.elevationSm,
+        elevation: 0,
         shadowColor: isLight
-            ? AppColors.deepNavy.withAlpha(18)
-            : Colors.black.withAlpha(60),
+            ? const Color(0x0C0F172A)
+            : Colors.black.withAlpha(80),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(20),
           side: BorderSide(
             color: isLight
-                ? const Color(0xFFD8E8F2)
-                : AppColors.navyBorder,
+                ? const Color(0xFFF1F5F9)
+                : AppColors.navyBorder.withAlpha(120),
             width: 1,
           ),
         ),
@@ -179,21 +172,21 @@ abstract final class AppTheme {
       // ── Elevated Button ───────────────────────────────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.electricCyan,
-          foregroundColor: AppColors.deepNavy,
+          backgroundColor: AppColors.purple,
+          foregroundColor: Colors.white,
           disabledBackgroundColor: isLight
-              ? const Color(0xFFCCE9F0)
+              ? const Color(0xFFE2E8F0)
               : AppColors.navyBorder,
           disabledForegroundColor: isLight
               ? AppColors.textTertiaryLight
               : AppColors.textTertiaryDark,
-          elevation: AppDimensions.elevationNone,
+          elevation: 0,
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.space24,
             vertical: AppDimensions.space16,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -205,15 +198,15 @@ abstract final class AppTheme {
       // ── Filled Button ────────────────────────────────────────
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.electricCyan,
-          foregroundColor: AppColors.deepNavy,
-          elevation: AppDimensions.elevationNone,
+          backgroundColor: AppColors.royalBlue,
+          foregroundColor: Colors.white,
+          elevation: 0,
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.space24,
             vertical: AppDimensions.space16,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -225,13 +218,13 @@ abstract final class AppTheme {
       // ── Text Button ──────────────────────────────────────────
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.electricCyan,
+          foregroundColor: AppColors.royalBlue,
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.space16,
             vertical: AppDimensions.space8,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -242,14 +235,17 @@ abstract final class AppTheme {
       // ── Outlined Button ──────────────────────────────────────
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.electricCyan,
-          side: const BorderSide(color: AppColors.electricCyan, width: 1.5),
+          foregroundColor: isLight ? AppColors.royalBlue : AppColors.purpleLight,
+          side: BorderSide(
+            color: isLight ? AppColors.royalBlue : AppColors.purpleLight,
+            width: 1.5,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.space24,
             vertical: AppDimensions.space16,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -261,46 +257,46 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isLight
-            ? AppColors.lightSurfaceVariant
+            ? const Color(0xFFF8FAFC)
             : AppColors.darkSurfaceVariant,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.space16,
           vertical: AppDimensions.space16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: isLight
-                ? const Color(0xFFD8E8F2)
-                : AppColors.navyBorder,
+            color: isLight ? const Color(0xFFE2E8F0) : AppColors.navyBorder,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: isLight
-                ? const Color(0xFFD8E8F2)
-                : AppColors.navyBorder,
+            color: isLight ? const Color(0xFFE2E8F0) : AppColors.navyBorder,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
-            color: AppColors.electricCyan,
+            color: AppColors.royalBlue,
             width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         hintStyle: isLight
-            ? AppTypography.lightTextTheme.bodyMedium
-            : AppTypography.darkTextTheme.bodyMedium,
+            ? AppTypography.lightTextTheme.bodyMedium?.copyWith(
+                color: AppColors.textTertiaryLight,
+              )
+            : AppTypography.darkTextTheme.bodyMedium?.copyWith(
+                color: AppColors.textTertiaryDark,
+              ),
         labelStyle: isLight
             ? AppTypography.lightTextTheme.bodyMedium
             : AppTypography.darkTextTheme.bodyMedium,
@@ -309,12 +305,12 @@ abstract final class AppTheme {
       // ── Chip ─────────────────────────────────────────────────
       chipTheme: ChipThemeData(
         backgroundColor: isLight
-            ? AppColors.lightSurfaceVariant
+            ? const Color(0xFFF1F5F9)
             : AppColors.darkSurfaceVariant,
-        selectedColor: AppColors.cyanGlow,
+        selectedColor: isLight ? AppColors.lavender : AppColors.deepNavyLighter,
         labelStyle: textTheme.labelMedium,
         side: BorderSide(
-          color: isLight ? const Color(0xFFD8E8F2) : AppColors.navyBorder,
+          color: isLight ? const Color(0xFFE2E8F0) : AppColors.navyBorder,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
@@ -327,7 +323,7 @@ abstract final class AppTheme {
 
       // ── Divider ──────────────────────────────────────────────
       dividerTheme: DividerThemeData(
-        color: isLight ? const Color(0xFFD8E8F2) : AppColors.navyBorder,
+        color: isLight ? const Color(0xFFF1F5F9) : AppColors.navyBorder,
         thickness: 1,
         space: 1,
       ),
@@ -336,10 +332,11 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor:
             isLight ? AppColors.lightSurface : AppColors.darkSurface,
-        indicatorColor: AppColors.cyanGlow,
+        indicatorColor: isLight ? AppColors.lavender : AppColors.deepNavyLighter,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.electricCyan);
+            return IconThemeData(
+                color: isLight ? AppColors.royalBlue : AppColors.purpleLight);
           }
           return IconThemeData(
             color: isLight
@@ -351,16 +348,14 @@ abstract final class AppTheme {
           final base =
               isLight ? AppTypography.lightTextTheme : AppTypography.darkTextTheme;
           if (states.contains(WidgetState.selected)) {
-            return base.labelSmall
-                ?.copyWith(color: AppColors.electricCyan, fontWeight: FontWeight.w600);
+            return base.labelSmall?.copyWith(
+                color: isLight ? AppColors.royalBlue : AppColors.purpleLight,
+                fontWeight: FontWeight.w700);
           }
           return base.labelSmall;
         }),
-        elevation: AppDimensions.elevationSm,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shadowColor: isLight
-            ? AppColors.deepNavy.withAlpha(18)
-            : Colors.black.withAlpha(60),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
 
@@ -368,102 +363,56 @@ abstract final class AppTheme {
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor:
             isLight ? AppColors.lightSurface : AppColors.darkSurface,
-        selectedItemColor: AppColors.electricCyan,
+        selectedItemColor: isLight ? AppColors.royalBlue : AppColors.purpleLight,
         unselectedItemColor: isLight
-            ? AppColors.textSecondaryLight
+            ? AppColors.textTertiaryLight
             : AppColors.textSecondaryDark,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
         type: BottomNavigationBarType.fixed,
-        elevation: AppDimensions.elevationLg,
+        elevation: 8,
       ),
 
       // ── Floating Action Button ────────────────────────────────
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.electricCyan,
-        foregroundColor: AppColors.deepNavy,
-        elevation: AppDimensions.elevationMd,
-        shape: CircleBorder(),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.purple,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        focusElevation: 4,
+        hoverElevation: 4,
+        highlightElevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
 
       // ── Dialog ───────────────────────────────────────────────
       dialogTheme: DialogThemeData(
         backgroundColor:
             isLight ? AppColors.lightSurface : AppColors.darkSurface,
-        elevation: AppDimensions.elevationXl,
-        shadowColor:
-            isLight ? AppColors.deepNavy.withAlpha(30) : Colors.black,
+        elevation: 16,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radius2xl),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isLight ? const Color(0xFFF1F5F9) : AppColors.navyBorder,
+          ),
         ),
-        titleTextStyle: isLight
-            ? AppTypography.lightTextTheme.titleLarge
-            : AppTypography.darkTextTheme.titleLarge,
-        contentTextStyle: isLight
-            ? AppTypography.lightTextTheme.bodyMedium
-            : AppTypography.darkTextTheme.bodyMedium,
+        titleTextStyle: textTheme.headlineSmall,
+        contentTextStyle: textTheme.bodyMedium,
       ),
 
       // ── Bottom Sheet ─────────────────────────────────────────
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor:
             isLight ? AppColors.lightSurface : AppColors.darkSurface,
+        elevation: 16,
         surfaceTintColor: Colors.transparent,
-        elevation: AppDimensions.elevationXl,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimensions.radius2xl),
+            top: Radius.circular(28),
           ),
         ),
-      ),
-
-      // ── Switch ───────────────────────────────────────────────
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.deepNavy;
-          }
-          return isLight ? AppColors.textTertiaryLight : AppColors.navyBorder;
-        }),
-        trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.electricCyan;
-          }
-          return isLight
-              ? AppColors.lightSurfaceVariant
-              : AppColors.darkSurfaceVariant;
-        }),
-      ),
-
-      // ── Progress Indicator ───────────────────────────────────
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.electricCyan,
-        linearTrackColor: AppColors.cyanGlow,
-        circularTrackColor: AppColors.cyanGlow,
-      ),
-
-      // ── Snack Bar ────────────────────────────────────────────
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor:
-            isLight ? AppColors.deepNavy : AppColors.navyLight,
-        contentTextStyle: AppTypography.darkTextTheme.bodyMedium,
-        actionTextColor: AppColors.electricCyan,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        ),
-        elevation: AppDimensions.elevationLg,
-      ),
-
-      // ── Page Transitions ─────────────────────────────────────
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.fuchsia: FadeUpwardsPageTransitionsBuilder(),
-        },
       ),
     );
   }

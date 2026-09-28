@@ -136,24 +136,24 @@ class StepIncome extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (isDark
-                            ? AppColors.navyMid
-                            : const Color(0xFFF0F9FF))
+                            ? const Color(0xFF6366F1).withAlpha(30)
+                            : const Color(0xFFEEF2FF))
                         : (isDark
                             ? AppColors.darkSurface
                             : AppColors.lightSurface),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.electricCyan
+                          ? const Color(0xFF6366F1)
                           : (isDark
                               ? AppColors.navyBorder
-                              : const Color(0xFFD6E4F0)),
+                              : const Color(0xFFE2E8F0)),
                       width: isSelected ? 1.5 : 1.0,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.electricCyan.withAlpha(30),
+                              color: const Color(0xFF6366F1).withAlpha(30),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -166,7 +166,7 @@ class StepIncome extends StatelessWidget {
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.electricCyan.withAlpha(40)
+                              ? const Color(0xFF6366F1).withAlpha(35)
                               : (isDark
                                   ? AppColors.navyMid
                                   : AppColors.lightSurfaceVariant),
@@ -177,7 +177,7 @@ class StepIncome extends StatelessWidget {
                           opt.icon,
                           size: 18,
                           color: isSelected
-                              ? AppColors.electricCyan
+                              ? const Color(0xFF6366F1)
                               : (isDark
                                   ? AppColors.textSecondaryDark
                                   : AppColors.textSecondaryLight),

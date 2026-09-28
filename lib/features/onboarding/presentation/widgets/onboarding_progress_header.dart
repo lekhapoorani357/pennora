@@ -38,19 +38,23 @@ class OnboardingProgressHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.cyanGlow,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                color: isDark
+                    ? const Color(0xFF8B5CF6).withAlpha(40)
+                    : const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.electricCyan.withAlpha(80),
+                  color: isDark
+                      ? const Color(0xFF8B5CF6).withAlpha(90)
+                      : const Color(0xFFC7D2FE),
                 ),
               ),
               child: Text(
                 'STEP ${currentStep + 1} OF $totalSteps',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.0,
-                  color: AppColors.electricCyan,
+                  color: isDark ? const Color(0xFFA78BFA) : const Color(0xFF4F46E5),
                 ),
               ),
             ),
@@ -70,14 +74,14 @@ class OnboardingProgressHeader extends StatelessWidget {
 
         // Animated linear progress bar
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
           child: Stack(
             children: [
               Container(
                 height: 6,
                 color: isDark
                     ? AppColors.navyBorder
-                    : AppColors.lightSurfaceVariant,
+                    : const Color(0xFFE2E8F0),
               ),
               AnimatedFractionallySizedBox(
                 duration: const Duration(milliseconds: 300),
@@ -87,7 +91,11 @@ class OnboardingProgressHeader extends StatelessWidget {
                   height: 6,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: AppColors.gradientAccent,
+                      colors: [
+                        Color(0xFF5A58EE),
+                        Color(0xFF835CF6),
+                        Color(0xFFA855F7),
+                      ],
                     ),
                   ),
                 ),
@@ -116,7 +124,7 @@ class OnboardingProgressHeader extends StatelessWidget {
                     size: 16,
                     color: isDark
                         ? AppColors.navyBorder
-                        : const Color(0xFFD6E4F0),
+                        : const Color(0xFFCBD5E1),
                   ),
                 ),
             ],
@@ -139,13 +147,13 @@ class OnboardingProgressHeader extends StatelessWidget {
     BorderSide border;
 
     if (isActive) {
-      fgColor = AppColors.deepNavy;
-      bgColor = AppColors.electricCyan;
+      fgColor = Colors.white;
+      bgColor = const Color(0xFF6366F1);
       border = BorderSide.none;
     } else if (isDone) {
-      fgColor = AppColors.mint;
-      bgColor = isDark ? AppColors.navyMid : const Color(0xFFE6FAF4);
-      border = BorderSide(color: AppColors.mint.withAlpha(90));
+      fgColor = const Color(0xFF10B981);
+      bgColor = isDark ? const Color(0xFF064E3B).withAlpha(80) : const Color(0xFFECFDF5);
+      border = BorderSide(color: const Color(0xFF10B981).withAlpha(90));
     } else {
       fgColor = isDark
           ? AppColors.textTertiaryDark
@@ -154,7 +162,7 @@ class OnboardingProgressHeader extends StatelessWidget {
           ? AppColors.darkSurfaceVariant.withAlpha(120)
           : AppColors.lightSurfaceVariant.withAlpha(120);
       border = BorderSide(
-        color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0),
+        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
       );
     }
 
@@ -168,6 +176,15 @@ class OnboardingProgressHeader extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           border: Border.fromBorderSide(border),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withAlpha(80),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
