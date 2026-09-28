@@ -86,29 +86,35 @@ _SessionLocal: Optional[sessionmaker] = None
 
 
 def get_engine() -> Engine:
-    """Returns or creates the active SQLAlchemy SQLite engine with WAL pragma."""
+    """Returns or creates the active SQLAlchemy engine (Cloud DB or SQLite)."""
     global _engine
     if _engine is None:
-        db_path = os.path.abspath(settings.SQLITE_DB_PATH)
-        parent_dir = os.path.dirname(db_path)
-        if parent_dir:
-            os.makedirs(parent_dir, exist_ok=True)
+        if settings.DATABASE_URL:
+            db_url = settings.DATABASE_URL
+            if db_url.startswith("postgres://"):
+                db_url = db_url.replace("postgres://", "postgresql://", 1)
+            _engine = create_engine(db_url, pool_pre_ping=True)
+        else:
+            db_path = os.path.abspath(settings.SQLITE_DB_PATH)
+            parent_dir = os.path.dirname(db_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
 
-        db_url = f"sqlite:///{db_path}"
-        _engine = create_engine(
-            db_url,
-            connect_args={"check_same_thread": False, "timeout": 30},
-        )
+            db_url = f"sqlite:///{db_path}"
+            _engine = create_engine(
+                db_url,
+                connect_args={"check_same_thread": False, "timeout": 30},
+            )
 
-        @event.listens_for(_engine, "connect")
-        def set_sqlite_pragma(dbapi_connection, connection_record):
-            cursor = dbapi_connection.cursor()
-            try:
-                cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.execute("PRAGMA synchronous=NORMAL")
-                cursor.execute("PRAGMA foreign_keys=ON")
-            finally:
-                cursor.close()
+            @event.listens_for(_engine, "connect")
+            def set_sqlite_pragma(dbapi_connection, connection_record):
+                cursor = dbapi_connection.cursor()
+                try:
+                    cursor.execute("PRAGMA journal_mode=WAL")
+                    cursor.execute("PRAGMA synchronous=NORMAL")
+                    cursor.execute("PRAGMA foreign_keys=ON")
+                finally:
+                    cursor.close()
 
     return _engine
 
@@ -156,9 +162,30 @@ def get_db():
 
 
 def init_db(engine: Optional[Engine] = None) -> None:
-    """Creates SQLite database and all required tables and indexes."""
+    """Creates database and all required tables and auto-migrates missing columns for SQLite."""
     eng = engine or get_engine()
     Base.metadata.create_all(bind=eng)
+
+    # Auto-migrate any missing columns on existing SQLite tables
+    if eng.dialect.name == "sqlite":
+        from sqlalchemy import inspect
+        inspector = inspect(eng)
+        with eng.connect() as conn:
+            for table_name, table in Base.metadata.tables.items():
+                if inspector.has_table(table_name):
+                    existing_cols = {col["name"] for col in inspector.get_columns(table_name)}
+                    for col in table.columns:
+                        if col.name not in existing_cols:
+                            col_type = col.type.compile(eng.dialect)
+                            default_clause = ""
+                            if col.default is not None and hasattr(col.default, "arg") and not callable(col.default.arg):
+                                default_clause = f" DEFAULT '{col.default.arg}'"
+                            alter_stmt = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type}{default_clause}"
+                            try:
+                                conn.execute(text(alter_stmt))
+                                conn.commit()
+                            except Exception:
+                                pass
 
 
 # Backward compatibility alias for app.main lifespan
@@ -463,10 +490,11 @@ _database_instance: Optional[SQLiteDatabase] = None
 
 
 def get_database() -> SQLiteDatabase:
-    """Returns the GoalSync SQLite database handle."""
+    """Returns the GoalSync database handle."""
     global _database_instance
     if _database_instance is None:
-        _database_instance = SQLiteDatabase(settings.DATABASE_NAME)
+        db_name = "supabase_postgres" if settings.DATABASE_URL else settings.DATABASE_NAME
+        _database_instance = SQLiteDatabase(db_name)
     return _database_instance
 
 

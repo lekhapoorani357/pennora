@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,6 +8,7 @@ class Settings(BaseSettings):
         os.path.join(os.path.dirname(os.path.dirname(__file__)), "goalsync.db")
     )
     DATABASE_NAME: str = "goalsync.db"
+    DATABASE_URL: Optional[str] = None
     JWT_SECRET: str = "super-secret-key-change-this-in-production-32-bytes"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
@@ -14,7 +16,10 @@ class Settings(BaseSettings):
     MONGODB_URI: str = ""
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),
+        env_file=(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
+        ),
         env_file_encoding="utf-8",
         extra="ignore",
     )

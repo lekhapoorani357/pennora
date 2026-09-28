@@ -71,17 +71,24 @@ def health_check():
 
 @app.get("/health/db", tags=["Health"])
 def database_health_check():
-    """Pings SQLite and confirms database connectivity."""
+    """Pings database and confirms database connectivity and engine type."""
     try:
+        from app.database import get_engine
+        engine = get_engine()
+        dialect_name = engine.dialect.name
+        db_type = "PostgreSQL" if "postgres" in dialect_name else dialect_name.upper()
         db = get_database()
         ping_res = db.command("ping")
         return {
             "status": "ok",
+            "database_type": db_type,
             "database": db.name,
+            "dialect": dialect_name,
             "ping": ping_res,
         }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"SQLite database connection failure: {str(e)}",
+            detail=f"Database connection failure: {str(e)}",
         )
+

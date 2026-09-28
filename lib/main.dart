@@ -10,6 +10,7 @@ import 'features/monetization/services/subscription_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseService.instance.init(); // Establish Supabase connection first
   await AuthService.instance.init();
   // Pre-init profile service so role detection works synchronously at startup
   await FinancialProfileService.instance.init();
