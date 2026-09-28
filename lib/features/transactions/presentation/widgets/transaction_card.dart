@@ -55,23 +55,21 @@ class TransactionCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimensions.space10),
         padding: const EdgeInsets.all(AppDimensions.space12),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isDark ? AppColors.navyBorder : const Color(0xFFDCE8F2),
+            color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark
-                  ? Colors.black.withAlpha(25)
-                  : Colors.black.withAlpha(6),
+              color: Colors.black.withAlpha(isDark ? 0 : 4),
               blurRadius: 6,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -79,24 +77,17 @@ class TransactionCard extends StatelessWidget {
           children: [
             // Category Icon Avatar
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.navyBorder
-                      : const Color(0xFFD6E4F0),
-                ),
+                    : AppColors.lightLavender,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 _iconForCategory(transaction.category),
-                color: isDark
-                    ? AppColors.electricCyan
-                    : const Color(0xFF008AA3),
+                color: isDark ? AppColors.accent : AppColors.primary,
                 size: 20,
               ),
             ),

@@ -124,22 +124,23 @@ class _AiCopilotPageState extends State<AiCopilotPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'PENNORA AI',
+              'AI Copilot',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
               ),
             ),
+            const SizedBox(height: 2),
             const Text(
-              'Your Personal Finance Assistant',
+              'Multi-Agent Financial Intelligence',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.purple,
+                color: AppColors.primary,
               ),
             ),
           ],

@@ -18,6 +18,10 @@ class TransactionsPage extends StatefulWidget {
 
 class _TransactionsPageState extends State<TransactionsPage> {
   String _selectedFilter = 'All'; // 'All', 'Debit', 'Credit'
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+  DateTimeRange? _selectedDateRange;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +37,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   void dispose() {
     TransactionService.instance.removeListener(_onServiceUpdate);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -47,6 +52,34 @@ class _TransactionsPageState extends State<TransactionsPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddEditTransactionModal(userId: userId),
     );
+  }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: _selectedDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 30)),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDateRange = picked);
+    }
   }
 
   String _fmt(double v) {
@@ -66,10 +99,27 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final totalCount = allTransactions.length;
     final totalDebit = TransactionService.instance.getTotalDebit(userId);
     final totalCredit = TransactionService.instance.getTotalCredit(userId);
+    final netCashflow = totalCredit - totalDebit;
+
+    final categories = ['All', ...allTransactions.map((t) => t.category).toSet()];
 
     final filteredTransactions = allTransactions.where((t) {
-      if (_selectedFilter == 'Debit') return t.isDebit;
-      if (_selectedFilter == 'Credit') return t.isCredit;
+      if (_selectedFilter == 'Debit' && !t.isDebit) return false;
+      if (_selectedFilter == 'Credit' && !t.isCredit) return false;
+      if (_selectedCategory != 'All' && t.category != _selectedCategory) return false;
+      if (_selectedDateRange != null) {
+        if (t.dateTime.isBefore(_selectedDateRange!.start) ||
+            t.dateTime.isAfter(_selectedDateRange!.end.add(const Duration(days: 1)))) {
+          return false;
+        }
+      }
+      if (_searchQuery.trim().isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final matchMerchant = t.merchantName.toLowerCase().contains(q);
+        final matchCategory = t.category.toLowerCase().contains(q);
+        final matchNotes = (t.notes ?? '').toLowerCase().contains(q);
+        if (!matchMerchant && !matchCategory && !matchNotes) return false;
+      }
       return true;
     }).toList();
 
@@ -78,10 +128,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         title: const Text(
-          'Activity & Money',
+          'Transactions',
           style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
           ),
         ),
@@ -91,33 +141,28 @@ class _TransactionsPageState extends State<TransactionsPage> {
             : AppColors.textPrimaryLight,
         elevation: 0,
         actions: [
-          IconButton(
-            tooltip: 'Add Transaction',
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF5A58EE), Color(0xFF835CF6)],
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton.icon(
+              onPressed: () => _openAddTransactionModal(userId),
+              icon: const Icon(Icons.add_outlined, size: 16),
+              label: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                shape: BoxShape.circle,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
             ),
-            onPressed: () => _openAddTransactionModal(userId),
           ),
-          const SizedBox(width: 8),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openAddTransactionModal(userId),
-        backgroundColor: AppColors.royalBlue,
-        foregroundColor: Colors.white,
-        tooltip: 'Add Transaction',
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Add Money',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -131,25 +176,20 @@ class _TransactionsPageState extends State<TransactionsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Overview Summary Hero Banner
+                  // Overview Summary Card
                   Container(
                     padding: const EdgeInsets.all(AppDimensions.space20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF071A52),
-                          Color(0xFF0B1F5E),
-                          Color(0xFF1E1B4B),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                       ),
-                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF071A52).withAlpha(100),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
+                          color: Colors.black.withAlpha(isDark ? 0 : 8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -157,31 +197,46 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(20),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'CASHFLOW SUMMARY',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.electricCyan,
-                                  letterSpacing: 0.8,
-                                ),
+                            Text(
+                              'CASHFLOW OVERVIEW',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
                               ),
                             ),
-                            const Spacer(),
-                            Text(
-                              '$totalCount Transactions',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withAlpha(180),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.lightLavender,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Total Count',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    ': $totalCount',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -190,20 +245,92 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         Row(
                           children: [
                             Expanded(
-                              child: _summaryBox(
-                                label: 'Total Inflow',
-                                value: _fmt(totalCredit),
-                                color: AppColors.mint,
-                                icon: Icons.arrow_downward_rounded,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Inflow',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _fmt(totalCredit),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            Container(
+                              width: 1,
+                              height: 36,
+                              color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                            ),
+                            const SizedBox(width: 16),
                             Expanded(
-                              child: _summaryBox(
-                                label: 'Total Outflow',
-                                value: _fmt(totalDebit),
-                                color: AppColors.pink,
-                                icon: Icons.arrow_upward_rounded,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Outflow',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _fmt(totalDebit),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 36,
+                              color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Net Balance',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _fmt(netCashflow),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: netCashflow >= 0
+                                          ? AppColors.primary
+                                          : AppColors.error,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -211,33 +338,176 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space20),
+                  const SizedBox(height: AppDimensions.space16),
 
-                  // Filter Row
-                  if (allTransactions.isNotEmpty) ...[
-                    Row(
-                      children: [
-                        Text(
-                          'FILTER BY',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
+                  // Search Bar
+                  Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Search merchant or notes...',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight,
                         ),
-                        const Spacer(),
+                        prefixIcon: const Icon(
+                          Icons.search_outlined,
+                          size: 18,
+                          color: AppColors.secondaryText,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 16),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.space12),
+
+                  // Filter Row: Type Chips, Category Dropdown, Date Picker
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
                         _filterChip('All', isDark),
                         const SizedBox(width: 6),
                         _filterChip('Debit', isDark),
                         const SizedBox(width: 6),
                         _filterChip('Credit', isDark),
+                        const SizedBox(width: 12),
+
+                        // Category Dropdown Filter
+                        if (categories.length > 2) ...[
+                          Container(
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkSurfaceVariant
+                                  : AppColors.cardBackground,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.navyBorder
+                                    : AppColors.cardBorder,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedCategory,
+                                icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() => _selectedCategory = val);
+                                  }
+                                },
+                                items: categories.map((cat) {
+                                  return DropdownMenuItem(
+                                    value: cat,
+                                    child: Text(cat == 'All' ? 'All Categories' : cat),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+
+                        // Date Filter Button
+                        GestureDetector(
+                          onTap: _pickDateRange,
+                          child: Container(
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: _selectedDateRange != null
+                                  ? AppColors.lightLavender
+                                  : (isDark
+                                      ? AppColors.darkSurfaceVariant
+                                      : AppColors.cardBackground),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _selectedDateRange != null
+                                    ? AppColors.primary
+                                    : (isDark
+                                        ? AppColors.navyBorder
+                                        : AppColors.cardBorder),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 13,
+                                  color: _selectedDateRange != null
+                                      ? AppColors.primary
+                                      : AppColors.secondaryText,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _selectedDateRange != null
+                                      ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
+                                      : 'Date',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: _selectedDateRange != null
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: _selectedDateRange != null
+                                        ? AppColors.primary
+                                        : AppColors.secondaryText,
+                                  ),
+                                ),
+                                if (_selectedDateRange != null) ...[
+                                  const SizedBox(width: 4),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _selectedDateRange = null),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 12,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: AppDimensions.space16),
-                  ],
+                  ),
+                  const SizedBox(height: AppDimensions.space16),
 
                   // Content: Empty State OR Transaction List
                   if (allTransactions.isEmpty)
@@ -270,67 +540,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _summaryBox({
-    required String label,
-    required String value,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(14),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withAlpha(30),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withAlpha(180),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _filterChip(String filter, bool isDark) {
     final isSelected = _selectedFilter == filter;
-    final label = filter == 'Debit'
-        ? 'Outflow'
-        : filter == 'Credit'
-            ? 'Inflow'
-            : 'All';
+    final label = filter;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = filter),
@@ -339,24 +551,24 @@ class _TransactionsPageState extends State<TransactionsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.royalBlue
+              ? AppColors.primary
               : (isDark
                   ? AppColors.darkSurfaceVariant
-                  : AppColors.lightSurfaceVariant),
-          borderRadius: BorderRadius.circular(16),
+                  : AppColors.cardBackground),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? AppColors.royalBlue
+                ? AppColors.primary
                 : (isDark
-                    ? AppColors.navyBorder.withAlpha(80)
-                    : const Color(0xFFE2E8F0)),
+                    ? AppColors.navyBorder
+                    : AppColors.cardBorder),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
                 ? Colors.white
                 : (isDark
@@ -375,44 +587,33 @@ class _TransactionsPageState extends State<TransactionsPage> {
         vertical: AppDimensions.space40,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(22),
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? AppColors.navyBorder.withAlpha(100)
-              : const Color(0xFFE2E8F0),
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
         ),
       ),
       child: Column(
         children: [
           Container(
-            width: 72,
-            height: 72,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
-              ),
+              color: AppColors.lightLavender,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withAlpha(80),
-                  blurRadius: 18,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: const Icon(
-              Icons.receipt_long_rounded,
-              size: 36,
-              color: Colors.white,
+              Icons.receipt_long_outlined,
+              size: 28,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: AppDimensions.space20),
           Text(
-            'No Transactions Recorded',
+            'No transactions yet',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
@@ -420,7 +621,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
           ),
           const SizedBox(height: AppDimensions.space8),
           Text(
-            'Start by adding your income or expenses to track real-time money movements.',
+            'Transactions will appear when financial data is connected.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -433,17 +634,17 @@ class _TransactionsPageState extends State<TransactionsPage> {
           const SizedBox(height: AppDimensions.space24),
           ElevatedButton.icon(
             onPressed: () => _openAddTransactionModal(userId),
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Add Your First Transaction'),
+            icon: const Icon(Icons.add_outlined, size: 18),
+            label: const Text('Add Transaction'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.royalBlue,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
             ),
@@ -457,17 +658,17 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.space24),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(18),
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppColors.navyBorder.withAlpha(80)
-              : const Color(0xFFE2E8F0),
+              ? AppColors.navyBorder
+              : AppColors.cardBorder,
         ),
       ),
       child: Center(
         child: Text(
-          'No $_selectedFilter transactions found.',
+          'No transactions matching your filters.',
           style: TextStyle(
             fontSize: 13,
             color: isDark

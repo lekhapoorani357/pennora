@@ -609,34 +609,16 @@ class _SignUpPageState extends State<SignUpPage> {
                     const SizedBox(height: AppDimensions.space28),
 
                     // Submit Button: [ Create Account ]
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF5A58EE),
-                            Color(0xFF835CF6),
-                            Color(0xFFA855F7),
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF7C3AED).withAlpha(100),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
+                    SizedBox(
+                      height: 52,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSignUp,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: _isLoading

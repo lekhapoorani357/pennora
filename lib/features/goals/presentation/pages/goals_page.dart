@@ -100,10 +100,10 @@ class _GoalsPageState extends State<GoalsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Goals Journey',
+                              'Your Goals',
                               style: TextStyle(
                                 fontSize: 26,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: -0.5,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -112,7 +112,7 @@ class _GoalsPageState extends State<GoalsPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Dream bigger, plan smarter, and achieve more.',
+                              'Track your milestone targets and savings progress.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark
@@ -124,42 +124,24 @@ class _GoalsPageState extends State<GoalsPage> {
                         ),
                       ),
                       if (allGoals.isNotEmpty)
-                        GestureDetector(
-                          onTap: _openCreateGoal,
-                          child: Container(
+                        ElevatedButton.icon(
+                          onPressed: _openCreateGoal,
+                          icon: const Icon(Icons.add_outlined, size: 18),
+                          label: const Text('New Goal'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF5A58EE),
-                                  Color(0xFF835CF6),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF7C3AED).withAlpha(80),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                              horizontal: 16,
+                              vertical: 10,
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add_rounded,
-                                    size: 18, color: Colors.white),
-                                SizedBox(width: 4),
-                                Text(
-                                  'New Goal',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -167,26 +149,21 @@ class _GoalsPageState extends State<GoalsPage> {
                   ),
                   const SizedBox(height: AppDimensions.space20),
 
-                  // ── Financial Journey Hero Banner ───────────────────────
+                  // ── Financial Overview Card ──────────────────────────────
                   if (allGoals.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(AppDimensions.space20),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF071A52),
-                            Color(0xFF0F2B82),
-                            Color(0xFF2E1065),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                         ),
-                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0F2B82).withAlpha(100),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
+                            color: Colors.black.withAlpha(isDark ? 0 : 8),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -194,82 +171,150 @@ class _GoalsPageState extends State<GoalsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(25),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'JOURNEY OVERVIEW',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.electricCyan,
-                                    letterSpacing: 0.8,
-                                  ),
+                              Text(
+                                'OVERALL GOAL PROGRESS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
                                 ),
                               ),
-                              const Spacer(),
-                              Text(
-                                '${allGoals.where((g) => g.isCompleted).length}/${allGoals.length} Achieved',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white70,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightLavender,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${allGoals.where((g) => g.isCompleted).length} of ${allGoals.length} Achieved',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Total Saved',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white.withAlpha(180),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Total Target',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.textSecondaryDark
+                                            : AppColors.textSecondaryLight,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _fmt(totalSaved),
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColors.mint,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _fmt(totalTarget),
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? AppColors.textPrimaryDark
+                                            : AppColors.textPrimaryLight,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    'Total Target',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white.withAlpha(180),
+                              Container(
+                                width: 1,
+                                height: 36,
+                                color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Total Saved',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.textSecondaryDark
+                                            : AppColors.textSecondaryLight,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _fmt(totalTarget),
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _fmt(totalSaved),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.success,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 36,
+                                color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Progress',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.textSecondaryDark
+                                            : AppColors.textSecondaryLight,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      totalTarget > 0
+                                          ? '${((totalSaved / totalTarget) * 100).clamp(0, 100).toStringAsFixed(0)}%'
+                                          : '0%',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 14),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: totalTarget > 0
+                                  ? (totalSaved / totalTarget).clamp(0.0, 1.0)
+                                  : 0.0,
+                              minHeight: 6,
+                              backgroundColor: isDark
+                                  ? AppColors.darkSurfaceVariant
+                                  : AppColors.lightLavender.withAlpha(120),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -325,17 +370,19 @@ class _GoalsPageState extends State<GoalsPage> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: _openCreateGoal,
-                        icon: const Icon(Icons.add_rounded, size: 18),
+                        icon: const Icon(Icons.add_outlined, size: 18),
                         label: const Text('Add Another Goal'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.violet,
-                          side: const BorderSide(color: AppColors.violet),
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           textStyle: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -358,24 +405,20 @@ class _GoalsPageState extends State<GoalsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.violet
-              : (isDark
-                  ? AppColors.darkSurfaceVariant
-                  : AppColors.lightSurfaceVariant),
-          borderRadius: BorderRadius.circular(20),
+              ? AppColors.primary
+              : (isDark ? AppColors.darkSurfaceVariant : AppColors.cardBackground),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? AppColors.violet
-                : (isDark
-                    ? AppColors.navyBorder.withAlpha(80)
-                    : const Color(0xFFE2E8F0)),
+                ? AppColors.primary
+                : (isDark ? AppColors.navyBorder : AppColors.cardBorder),
           ),
         ),
         child: Text(
           title,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
                 ? Colors.white
                 : (isDark
@@ -396,98 +439,70 @@ class _EmptyGoalsState extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        const SizedBox(height: AppDimensions.space32),
-        Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.space32),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.lightLavender,
+              shape: BoxShape.circle,
             ),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7C3AED).withAlpha(80),
-                blurRadius: 24,
-                spreadRadius: 4,
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.flag_rounded,
-            size: 40,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.space24),
-        Text(
-          'Start Your Financial Journey',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.space10),
-        Text(
-          "Goals are the foundation of Pennora's intelligence engine. Create a goal to track your milestone targets and keep your future aligned.",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.5,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.space28),
-        Container(
-          width: double.infinity,
-          height: 52,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF5A58EE),
-                Color(0xFF835CF6),
-                Color(0xFFA855F7),
-              ],
+            child: const Icon(
+              Icons.flag_outlined,
+              size: 28,
+              color: AppColors.primary,
             ),
-            borderRadius: BorderRadius.circular(26),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7C3AED).withAlpha(90),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: ElevatedButton.icon(
+          const SizedBox(height: AppDimensions.space20),
+          Text(
+            'No Goals Yet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.space8),
+          Text(
+            'Create your first savings goal to track your milestone targets and let Pennora optimize your monthly surplus.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.space24),
+          ElevatedButton.icon(
             onPressed: onCreateGoal,
-            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
-            label: const Text(
-              'Create Your First Goal',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: Colors.white,
-              ),
-            ),
+            icon: const Icon(Icons.add_outlined, size: 18),
+            label: const Text('Create Your First Goal'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
-        ),
-        const SizedBox(height: AppDimensions.space40),
-      ],
+        ],
+      ),
     );
   }
 }

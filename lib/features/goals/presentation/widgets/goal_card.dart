@@ -4,7 +4,14 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../models/goal_model.dart';
 import 'goal_progress_bar.dart';
 
-/// Compact card showing a goal summary in the Goals list.
+/// Professional Goal Card matching the financial planning design system.
+///
+/// Displays:
+/// - Goal name & Priority badge (High/Medium/Low)
+/// - Target amount, Saved amount, Remaining amount, Target date
+/// - Clean Progress bar
+/// - Estimated Monthly required contribution
+/// - Status label: ON TRACK, AT RISK, SHORTFALL
 class GoalCard extends StatelessWidget {
   final GoalModel goal;
   final VoidCallback onTap;
@@ -12,36 +19,64 @@ class GoalCard extends StatelessWidget {
   const GoalCard({super.key, required this.goal, required this.onTap});
 
   Color _statusColor() {
-    if (goal.isCompleted) return AppColors.mint;
+    if (goal.isCompleted) return AppColors.success;
     if (goal.daysRemaining < 0) return AppColors.error;
-    if (goal.daysRemaining <= 30) return AppColors.warning;
-    return AppColors.electricCyan;
+    if (goal.daysRemaining <= 45) return AppColors.warning;
+    return AppColors.primary;
+  }
+
+  String _statusLabel() {
+    if (goal.isCompleted) return 'ON TRACK';
+    if (goal.daysRemaining < 0) return 'SHORTFALL';
+    if (goal.daysRemaining <= 45) return 'AT RISK';
+    return 'ON TRACK';
+  }
+
+  String _formatAmount(double amount) {
+    if (amount >= 10000000) return '₹${(amount / 10000000).toStringAsFixed(2)} Cr';
+    if (amount >= 100000) return '₹${(amount / 100000).toStringAsFixed(2)} L';
+    if (amount >= 1000) return '₹${(amount / 1000).toStringAsFixed(1)} K';
+    return '₹${amount.toStringAsFixed(0)}';
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  double _monthlyRequired() {
+    if (goal.isCompleted) return 0.0;
+    final months = (goal.daysRemaining / 30.4).ceil();
+    if (months <= 0) return goal.remainingAmount;
+    return goal.remainingAmount / months;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final statusColor = _statusColor();
+    final statusText = _statusLabel();
+    final monthlyReq = _monthlyRequired();
 
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimensions.space12),
         padding: const EdgeInsets.all(AppDimensions.space16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark
-                ? AppColors.navyBorder.withAlpha(120)
-                : const Color(0xFFE2E8F0),
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark
-                  ? Colors.black.withAlpha(40)
-                  : const Color(0xFF0F172A).withAlpha(8),
-              blurRadius: 14,
+              color: const Color(0x060F172A),
+              blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
@@ -49,22 +84,20 @@ class GoalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row
+            // Header: Icon + Name + Priority + Status
             Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.violet.withAlpha(30)
-                        : const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(12),
+                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.supporting,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     _categoryIcon(goal.category),
-                    size: 20,
-                    color: AppColors.violet,
+                    size: 18,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: AppDimensions.space12),
@@ -72,24 +105,31 @@ class GoalCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        goal.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              goal.name,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          _priorityTag(goal.priority, isDark),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        goal.category.displayName,
+                        'Target: ${_formatDate(goal.targetDate)} • ${goal.category.displayName}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: isDark
                               ? AppColors.textSecondaryDark
@@ -99,21 +139,20 @@ class GoalCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: statusColor.withAlpha(25),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: statusColor.withAlpha(80)),
+                    color: statusColor.withAlpha(20),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    goal.statusLabel,
+                    statusText,
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
                       color: statusColor,
-                      letterSpacing: 0.2,
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ),
@@ -121,30 +160,25 @@ class GoalCard extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.space14),
 
-            // Progress bar
+            // Progress Bar
             GoalProgressBar(fraction: goal.progressFraction),
-            const SizedBox(height: AppDimensions.space8),
+            const SizedBox(height: AppDimensions.space10),
 
-            // Amounts row
+            // Saved vs Target Metrics Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _amountLabel(
+                _metricItem(
                   label: 'Saved',
                   value: _formatAmount(goal.currentAmount),
                   isDark: isDark,
                 ),
-                Text(
-                  goal.progressPercentage,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: goal.isCompleted
-                        ? AppColors.mint
-                        : AppColors.royalBlue,
-                  ),
+                _metricItem(
+                  label: 'Remaining',
+                  value: goal.isCompleted ? 'Achieved' : _formatAmount(goal.remainingAmount),
+                  isDark: isDark,
                 ),
-                _amountLabel(
+                _metricItem(
                   label: 'Target',
                   value: _formatAmount(goal.targetAmount),
                   isDark: isDark,
@@ -152,43 +186,78 @@ class GoalCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppDimensions.space8),
 
-            // Remaining & date row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  goal.isCompleted
-                      ? 'Goal achieved!'
-                      : '${_formatAmount(goal.remainingAmount)} remaining',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: goal.isCompleted
-                        ? AppColors.mint
-                        : isDark
+            if (!goal.isCompleted && monthlyReq > 0) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightBackground,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Monthly Required',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '${_formatAmount(monthlyReq)} / mo',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  _formatDate(goal.targetDate),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _amountLabel({
+  Widget _priorityTag(GoalPriority priority, bool isDark) {
+    Color color;
+    switch (priority) {
+      case GoalPriority.essential:
+        color = AppColors.error;
+        break;
+      case GoalPriority.important:
+        color = AppColors.warning;
+        break;
+      case GoalPriority.flexible:
+        color = AppColors.primary;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        priority.name.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _metricItem({
     required String label,
     required String value,
     required bool isDark,
@@ -201,60 +270,45 @@ class GoalCard extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
-            color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-            letterSpacing: 0.5,
+            fontSize: 11,
+            color: isDark
+                ? AppColors.textTertiaryDark
+                : AppColors.textSecondaryLight,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
         ),
       ],
     );
   }
 
-  String _formatAmount(double amount) {
-    if (amount >= 10000000) {
-      return '${(amount / 10000000).toStringAsFixed(1)}Cr';
-    } else if (amount >= 100000) {
-      return '${(amount / 100000).toStringAsFixed(1)}L';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return amount.toStringAsFixed(0);
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec',
-    ];
-    return '${months[dt.month - 1]} ${dt.year}';
-  }
-
-  IconData _categoryIcon(GoalCategory cat) {
-    switch (cat) {
-      case GoalCategory.education:
-        return Icons.school_rounded;
-      case GoalCategory.travel:
-        return Icons.flight_rounded;
-      case GoalCategory.vehicle:
-        return Icons.directions_car_rounded;
-      case GoalCategory.home:
-        return Icons.home_rounded;
+  IconData _categoryIcon(GoalCategory category) {
+    switch (category) {
       case GoalCategory.emergencyFund:
-        return Icons.shield_rounded;
+        return Icons.shield_outlined;
+      case GoalCategory.home:
+        return Icons.home_outlined;
+      case GoalCategory.vehicle:
+        return Icons.directions_car_outlined;
+      case GoalCategory.travel:
+        return Icons.flight_outlined;
+      case GoalCategory.education:
+        return Icons.school_outlined;
       case GoalCategory.investment:
-        return Icons.trending_up_rounded;
+        return Icons.trending_up_outlined;
       case GoalCategory.personal:
-        return Icons.star_rounded;
+        return Icons.favorite_border_rounded;
       case GoalCategory.other:
-        return Icons.flag_rounded;
+        return Icons.flag_outlined;
     }
   }
 }

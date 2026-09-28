@@ -57,218 +57,383 @@ class _PremiumPageState extends State<PremiumPage> {
       backgroundColor:
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('Pennora Pro',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Premium',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+        ),
         backgroundColor: Colors.transparent,
+        foregroundColor: isDark
+            ? AppColors.textPrimaryDark
+            : AppColors.textPrimaryLight,
         elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.pagePaddingH,
-            vertical: AppDimensions.space20),
+            vertical: AppDimensions.space16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 700),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Hero Banner
+                // Header Subtitle
+                Text(
+                  'Turn your savings into a goal-based money growth plan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.space20),
+
+                // Pricing Card
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.space24),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0D253F), Color(0xFF163E66)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isPro
+                          ? AppColors.success
+                          : (isDark ? AppColors.navyBorder : AppColors.cardBorder),
                     ),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                    border: Border.all(color: AppColors.warning.withAlpha(120)),
                     boxShadow: [
                       BoxShadow(
-                          color: AppColors.warning.withAlpha(40),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6)),
+                        color: Colors.black.withAlpha(isDark ? 0 : 8),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
                     ],
                   ),
-                  child: Column(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withAlpha(40),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.warning),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Icon(Icons.workspace_premium_rounded,
-                            size: 16, color: AppColors.warning),
-                        const SizedBox(width: 6),
-                        Text(isPro ? 'PRO ACTIVE' : 'UPGRADE TO PRO',
-                            style: const TextStyle(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.lightLavender,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'DEMO PREMIUM',
+                              style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.0,
-                                color: AppColors.warning)),
-                      ]),
-                    ),
-                    const SizedBox(height: AppDimensions.space16),
-                    const Text('Unlock Full Financial Freedom',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Unlimited goals, full investment simulator, custom what-if scenarios, and LangGraph AI Copilot.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withAlpha(200),
-                          height: 1.4),
-                    ),
-                    const SizedBox(height: AppDimensions.space20),
-                    Row(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          if (isPro)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle,
+                                      size: 14, color: AppColors.success),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'ACTIVE',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          const Text('₹99',
-                              style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.warning)),
-                          Text(' / month',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withAlpha(180))),
-                        ]),
-                  ]),
+                          Text(
+                            '₹99',
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                          Text(
+                            ' / month',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Instant full access to advanced allocation and multi-product simulations.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (!isPro)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _activate,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Activate Demo Premium'),
+                          ),
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _isLoading ? null : _cancel,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.error,
+                                  side: const BorderSide(color: AppColors.error),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Cancel Demo Access',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: AppDimensions.space24),
 
-                // Feature Comparison
+                // Feature Cards
+                _sectionLabel('PREMIUM FEATURES', isDark),
+                const SizedBox(height: AppDimensions.space12),
+
+                _featureCard(
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: 'Goal-based allocation',
+                  description:
+                      'Intelligently map your surplus to fixed and market-linked instruments based on milestone horizons.',
+                  isDark: isDark,
+                ),
+                _featureCard(
+                  icon: Icons.explore_outlined,
+                  title: 'Investment discovery',
+                  description:
+                      'Simulate recurring deposits, PPF, index funds, and sovereign benchmarks side by side.',
+                  isDark: isDark,
+                ),
+                _featureCard(
+                  icon: Icons.trending_down_outlined,
+                  title: 'Historical downside',
+                  description:
+                      'Review stress-tested downside models to protect liquid reserves against drawdown shocks.',
+                  isDark: isDark,
+                ),
+                _featureCard(
+                  icon: Icons.tune_outlined,
+                  title: 'What-if analysis',
+                  description:
+                      'Test changes to your monthly surplus and evaluate accelerated completion dates in real time.',
+                  isDark: isDark,
+                ),
+                _featureCard(
+                  icon: Icons.notifications_active_outlined,
+                  title: 'Monthly monitoring',
+                  description:
+                      'Continuous surplus recalculation with proactive alerts when your plan falls off schedule.',
+                  isDark: isDark,
+                ),
+                _featureCard(
+                  icon: Icons.description_outlined,
+                  title: 'Plan reports',
+                  description:
+                      'Generate audit-grade financial summary reports and export complete allocation roadmaps.',
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: AppDimensions.space24),
+
+                // Feature Comparison Table
                 _sectionLabel('PLAN COMPARISON', isDark),
                 const SizedBox(height: AppDimensions.space12),
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: isDark
-                            ? AppColors.navyBorder
-                            : const Color(0xFFD6E4F0)),
+                      color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                    ),
                   ),
                   child: Column(children: [
                     _cmpRow('Goals Limit', 'Up to 3 goals', 'Unlimited', isDark),
                     _divider(isDark),
-                    _cmpRow('Investment Simulator', 'Basic Fixed Returns', 'Full 5-Product Suite', isDark),
+                    _cmpRow('Investment Simulator', 'Fixed deposits only', 'Full 5-Product Suite', isDark),
                     _divider(isDark),
-                    _cmpRow('What-If Scenarios', '1 Scenario', 'Unlimited + Custom', isDark),
+                    _cmpRow('What-If Scenarios', '1 scenario', 'Unlimited + Custom Modeler', isDark),
                     _divider(isDark),
-                    _cmpRow('AI Copilot', 'Rule-based', 'LangGraph Reasoning', isDark),
+                    _cmpRow('AI Copilot', 'Basic rules', 'LangGraph Intelligence', isDark),
                     _divider(isDark),
-                    _cmpRow('Ad-Free', 'Sponsored Partners', '100% Ad-Free', isDark),
+                    _cmpRow('Ad-Free', 'Partner banners', '100% Ad-Free', isDark),
                   ]),
                 ),
 
                 const SizedBox(height: AppDimensions.space20),
 
-                // Demo notice
+                // Demo Notice
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.space12),
                   decoration: BoxDecoration(
-                    color: AppColors.electricCyan.withAlpha(20),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    border: Border.all(color: AppColors.electricCyan.withAlpha(80)),
+                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightLavender,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                    ),
                   ),
                   child: Row(children: [
-                    const Icon(Icons.info_outline_rounded,
-                        size: 18, color: AppColors.electricCyan),
-                    const SizedBox(width: 10),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
-                        child: Text(
-                      'DEMO MODE: No real payment is charged. Tapping "Activate Pro" simulates premium access instantly.',
-                      style: TextStyle(
+                      child: Text(
+                        'DEMO PREMIUM: This is a risk-free demonstration environment. No charges occur.',
+                        style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
                           color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight),
-                    )),
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ),
                   ]),
                 ),
-
-                const SizedBox(height: AppDimensions.space24),
-
-                // Action Button
-                if (!isPro)
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _activate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.warning,
-                      foregroundColor: AppColors.deepNavy,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMd)),
-                      elevation: 4,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: AppColors.deepNavy))
-                        : const Text('Activate Pennora Pro (Demo)',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w800)),
-                  )
-                else
-                  Column(children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppDimensions.space16),
-                      decoration: BoxDecoration(
-                        color: AppColors.mint.withAlpha(25),
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusMd),
-                        border: Border.all(color: AppColors.mint.withAlpha(100)),
-                      ),
-                      child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check_circle_rounded,
-                                color: AppColors.mint),
-                            SizedBox(width: 8),
-                            Text('You are on Pennora Pro!',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.mint)),
-                          ]),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _isLoading ? null : _cancel,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusMd)),
-                      ),
-                      child: const Center(
-                          child: Text('Cancel Subscription',
-                              style: TextStyle(fontWeight: FontWeight.w700))),
-                    ),
-                  ]),
 
                 const SizedBox(height: AppDimensions.space32),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _featureCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required bool isDark,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.lightLavender,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -309,14 +474,14 @@ class _PremiumPageState extends State<PremiumPage> {
         Expanded(
             flex: 3,
             child: Row(children: [
-              const Icon(Icons.check_rounded, size: 16, color: AppColors.warning),
+              const Icon(Icons.check_rounded, size: 16, color: AppColors.primary),
               const SizedBox(width: 4),
               Expanded(
                   child: Text(pro,
                       style: const TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.warning))),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary))),
             ])),
       ]),
     );

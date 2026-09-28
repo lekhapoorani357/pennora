@@ -147,103 +147,77 @@ class _ProfilePageState extends State<ProfilePage> {
                   // Hero Profile Card
                   Container(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF071A52),
-                          Color(0xFF0D256D),
-                          Color(0xFF1E1B4B),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                       ),
-                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF071A52).withAlpha(100),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withAlpha(isDark ? 0 : 8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.all(AppDimensions.space24),
+                    padding: const EdgeInsets.all(AppDimensions.space20),
                     child: Column(
                       children: [
-                        // Avatar Initials with outer gradient ring
+                        // Avatar Initials
                         Container(
-                          padding: const EdgeInsets.all(3.5),
+                          width: 68,
+                          height: 68,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF38BDF8),
-                                Color(0xFF818CF8),
-                                Color(0xFFC084FC),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                            color: AppColors.lightLavender,
+                            border: Border.all(
+                              color: AppColors.primary.withAlpha(40),
+                              width: 2,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF818CF8).withAlpha(100),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
                           ),
-                          child: Container(
-                            width: 76,
-                            height: 76,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF0B1F5E),
-                            ),
-                            child: Center(
-                              child: Text(
-                                _getInitials(userName),
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 1.0,
-                                ),
+                          child: Center(
+                            child: Text(
+                              _getInitials(userName),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.space16),
+                        const SizedBox(height: 12),
 
                         Text(
                           userName,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.4,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                            letterSpacing: -0.3,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
 
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(25),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withAlpha(50),
-                            ),
+                            color: AppColors.lightLavender,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.verified_rounded, size: 13, color: Color(0xFF38BDF8)),
-                              SizedBox(width: 5),
+                            children: [
+                              Icon(Icons.verified_outlined, size: 14, color: AppColors.primary),
+                              SizedBox(width: 4),
                               Text(
-                                'Personal Account',
+                                'Verified Member',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.3,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
@@ -252,362 +226,219 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space24),
+                  const SizedBox(height: AppDimensions.space20),
 
                   // Account Information Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      'ACCOUNT INFORMATION',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ),
+                  _sectionLabel('ACCOUNT & PROFILE', isDark),
                   const SizedBox(height: AppDimensions.space10),
 
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(20),
+                      color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+                        color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(isDark ? 30 : 8),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: Column(
                       children: [
-                        _buildInfoTile(
-                          icon: Icons.person_outline_rounded,
-                          iconColor: const Color(0xFF3B82F6),
+                        _buildSettingRow(
+                          icon: Icons.person_outline,
                           title: 'Full Name',
                           value: userName,
                           isDark: isDark,
                         ),
-                        Divider(
-                          height: 1,
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
-                        ),
-                        _buildInfoTile(
+                        _divider(isDark),
+                        _buildSettingRow(
                           icon: Icons.phone_outlined,
-                          iconColor: const Color(0xFF10B981),
                           title: 'Phone Number',
                           value: userPhone,
                           isDark: isDark,
                         ),
-                        Divider(
-                          height: 1,
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.email_outlined,
-                          iconColor: const Color(0xFF8B5CF6),
+                        _divider(isDark),
+                        _buildSettingRow(
+                          icon: Icons.mail_outline,
                           title: 'Email Address',
                           value: userEmail,
                           isDark: isDark,
                         ),
-                        Divider(
-                          height: 1,
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.shield_outlined,
-                          iconColor: const Color(0xFF06B6D4),
-                          title: 'Session Status',
-                          value: 'Active (Secured)',
-                          isDark: isDark,
-                          trailingColor: AppColors.mint,
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space24),
+                  const SizedBox(height: AppDimensions.space20),
 
-                  // Financial Role Card
+                  // Financial & Risk Profile Section
+                  _sectionLabel('FINANCIAL & RISK PROFILE', isDark),
+                  const SizedBox(height: AppDimensions.space10),
+
                   Builder(builder: (ctx) {
                     final uid = user?.id ?? '';
                     final role = FinancialProfileService.instance.getRole(uid);
+                    final profile = FinancialProfileService.instance.getProfile(uid);
                     return Container(
-                      padding: const EdgeInsets.all(AppDimensions.space16),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+                          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                         ),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withAlpha(25),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              role == 'student'
-                                  ? Icons.school_rounded
-                                  : (role == 'working_married'
-                                      ? Icons.family_restroom_rounded
-                                      : Icons.work_rounded),
-                              size: 20,
-                              color: const Color(0xFF8B5CF6),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Financial Profile Role',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _roleLabel(role),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimaryLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const RoleSelectionPage(),
-                              ),
-                            ),
-                            child: const Text('Change'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: AppDimensions.space16),
-
-                  // Pro Subscription Card
-                  AnimatedBuilder(
-                    animation: SubscriptionService.instance,
-                    builder: (ctx, _) {
-                      final isPro = SubscriptionService.instance.isPremium;
-                      return Container(
-                        padding: const EdgeInsets.all(AppDimensions.space16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isPro
-                                ? [const Color(0xFF0F2B1D), const Color(0xFF0B1E14)]
-                                : [const Color(0xFF1B2A4A), const Color(0xFF101B30)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isPro ? AppColors.mint : AppColors.warning,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              isPro
-                                  ? Icons.workspace_premium_rounded
-                                  : Icons.star_border_rounded,
-                              size: 28,
-                              color: isPro ? AppColors.mint : AppColors.warning,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isPro ? 'Pennora Pro Active 🌟' : 'Pennora Free Plan',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: isPro ? AppColors.mint : AppColors.warning,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    isPro
-                                        ? 'Unlimited goals & full simulator access'
-                                        : 'Upgrade for ₹99/mo to unlock all tools',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white.withAlpha(200),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            ElevatedButton(
+                          _buildSettingRow(
+                            icon: Icons.badge_outlined,
+                            title: 'Financial Profile Role',
+                            value: _roleLabel(role),
+                            isDark: isDark,
+                            trailing: TextButton(
                               onPressed: () => Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const PremiumPage(),
+                                  builder: (_) => const RoleSelectionPage(),
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isPro ? AppColors.mint : AppColors.warning,
-                                foregroundColor: AppColors.deepNavy,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              child: Text(isPro ? 'Manage' : 'Upgrade'),
+                              child: const Text('Change'),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: AppDimensions.space16),
-
-                  // Growth & Admin Navigation Tiles
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Material(
-                          color: Colors.transparent,
-                          child: ListTile(
-                            leading: const Icon(Icons.trending_up_rounded,
-                                color: Color(0xFF3B82F6)),
-                            title: const Text(
-                              'Money Growth & Simulator',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: const Text(
-                              'Interactive SIP, FD, PPF & What-If Scenarios',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            trailing: const Icon(Icons.chevron_right_rounded),
+                          ),
+                          _divider(isDark),
+                          _buildSettingRow(
+                            icon: Icons.assessment_outlined,
+                            title: 'Risk Profile',
+                            value: profile != null && profile.monthlySurplus > 20000
+                                ? 'Moderate Growth (Balanced)'
+                                : 'Conservative (Capital Preservation)',
+                            isDark: isDark,
+                          ),
+                          _divider(isDark),
+                          _buildSettingRow(
+                            icon: Icons.trending_up_outlined,
+                            title: 'Money Growth Strategy',
+                            value: 'Interactive Simulator',
+                            isDark: isDark,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const MoneyGrowthPage(),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
+                        ],
+                      ),
+                    );
+                  }),
                   const SizedBox(height: AppDimensions.space20),
 
-                  // Preferences & System
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      'PREFERENCES & SYSTEM',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
+                  // Subscription Section
+                  _sectionLabel('SUBSCRIPTION & ACCESS', isDark),
+                  const SizedBox(height: AppDimensions.space10),
+
+                  AnimatedBuilder(
+                    animation: SubscriptionService.instance,
+                    builder: (ctx, _) {
+                      final isPro = SubscriptionService.instance.isPremium;
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                          ),
+                        ),
+                        child: _buildSettingRow(
+                          icon: Icons.workspace_premium_outlined,
+                          title: isPro ? 'Pennora Pro (Demo)' : 'Free Tier',
+                          value: isPro ? 'Unlimited goals & full simulator' : 'Standard features',
+                          isDark: isDark,
+                          trailing: ElevatedButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PremiumPage(),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: Text(isPro ? 'Manage' : 'Upgrade'),
+                          ),
+                        ),
+                      );
+                    },
                   ),
+                  const SizedBox(height: AppDimensions.space20),
+
+                  // Preferences, Notifications & Security
+                  _sectionLabel('PREFERENCES & SECURITY', isDark),
                   const SizedBox(height: AppDimensions.space10),
 
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(20),
+                      color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? AppColors.navyBorder : const Color(0xFFE2E8F0),
+                        color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(isDark ? 30 : 8),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: Column(
                       children: [
-                        _buildInfoTile(
-                          icon: Icons.currency_rupee_rounded,
-                          iconColor: const Color(0xFFF59E0B),
+                        _buildSettingRow(
+                          icon: Icons.notifications_none_outlined,
+                          title: 'Notifications',
+                          value: 'Drift alerts & milestones enabled',
+                          isDark: isDark,
+                        ),
+                        _divider(isDark),
+                        _buildSettingRow(
+                          icon: Icons.currency_rupee_outlined,
                           title: 'Default Currency',
                           value: 'INR (₹)',
                           isDark: isDark,
                         ),
-                        Divider(
-                          height: 1,
-                          color: isDark ? AppColors.navyBorder : const Color(0xFFF1F5F9),
+                        _divider(isDark),
+                        _buildSettingRow(
+                          icon: Icons.lock_outline,
+                          title: 'Security & Encryption',
+                          value: 'Protected with Supabase Auth',
+                          isDark: isDark,
                         ),
-                        _buildInfoTile(
-                          icon: Icons.info_outline_rounded,
-                          iconColor: const Color(0xFF64748B),
-                          title: 'Application Version',
-                          value: 'Pennora v1.0.0 (AI Edition)',
+                        _divider(isDark),
+                        _buildSettingRow(
+                          icon: Icons.info_outline,
+                          title: 'App Version',
+                          value: 'Pennora v1.0.0',
                           isDark: isDark,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space32),
+                  const SizedBox(height: AppDimensions.space28),
 
                   // Logout Button
-                  OutlinedButton.icon(
-                    onPressed: () => _handleLogout(context),
-                    icon: const Icon(Icons.logout_rounded, size: 20),
-                    label: const Text(
-                      'Log Out',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleLogout(context),
+                      icon: const Icon(Icons.logout_outlined, size: 18),
+                      label: const Text('Logout'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: BorderSide(
-                        color: AppColors.error.withAlpha(90),
-                        width: 1.5,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: isDark
-                          ? AppColors.error.withAlpha(15)
-                          : AppColors.error.withAlpha(10),
                     ),
                   ),
                   const SizedBox(height: AppDimensions.space24),
@@ -620,64 +451,95 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoTile({
+  Widget _sectionLabel(String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+        ),
+      ),
+    );
+  }
+
+  Widget _divider(bool isDark) {
+    return Divider(
+      height: 1,
+      color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+    );
+  }
+
+  Widget _buildSettingRow({
     required IconData icon,
-    required Color iconColor,
     required String title,
     required String value,
     required bool isDark,
-    Color? trailingColor,
+    Widget? trailing,
+    VoidCallback? onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.space16,
-        vertical: 14,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: iconColor.withAlpha(isDark ? 35 : 20),
-              borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.space16,
+          vertical: 14,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightLavender,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: AppColors.primary,
+              ),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.space14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
+            const SizedBox(width: AppDimensions.space14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: trailingColor ??
-                        (isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            if (trailing != null)
+              trailing
+            else if (onTap != null)
+              const Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: AppColors.secondaryText,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -36,7 +36,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-        length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+        length: 3, vsync: this, initialIndex: widget.initialTabIndex.clamp(0, 2));
     _runSim();
   }
 
@@ -74,27 +74,55 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
       backgroundColor:
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('Money Growth & Simulator',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Money Growth',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Plan how your savings can support your goals.',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.electricCyan,
-          labelColor: AppColors.electricCyan,
+          indicatorColor: AppColors.primary,
+          labelColor: AppColors.primary,
           unselectedLabelColor: isDark
               ? AppColors.textSecondaryDark
               : AppColors.textSecondaryLight,
           indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           tabs: const [
-            Tab(text: 'Investment Simulator'),
-            Tab(text: 'What-If Scenarios'),
+            Tab(text: 'Investment Plan'),
+            Tab(text: 'What-If'),
+            Tab(text: 'Insights'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildSimTab(isDark), _buildWhatIfTab(isDark)],
+        children: [
+          _buildSimTab(isDark),
+          _buildWhatIfTab(isDark),
+          _buildInsightsTab(isDark),
+        ],
       ),
     );
   }
@@ -102,6 +130,10 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
   // ─── TAB 1: INVESTMENT SIMULATOR ─────────────────────────────────────────
 
   Widget _buildSimTab(bool isDark) {
+    final userId = AuthService.instance.currentUser?.id ?? '';
+    final profile = FinancialProfileService.instance.getProfile(userId);
+    final surplus = profile?.monthlySurplus ?? 0.0;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.pagePaddingH, vertical: AppDimensions.space20),
@@ -111,6 +143,86 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Monthly Surplus Card
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.space16),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 0 : 6),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.lightLavender,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.savings_outlined,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Available Monthly Surplus',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _fmt(surplus),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightLavender,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Suitable for horizon',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.space16),
+
               _inputCard(isDark),
               const SizedBox(height: AppDimensions.space16),
               if (_simOutput != null && _simOutput!.warnings.isNotEmpty)
@@ -133,44 +245,51 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
     return Container(
       padding: const EdgeInsets.all(AppDimensions.space20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0)),
+            color: isDark ? AppColors.navyBorder : AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 0 : 6),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Icon(Icons.tune_rounded, size: 18, color: AppColors.electricCyan),
+          const Icon(Icons.tune_outlined, size: 18, color: AppColors.primary),
           const SizedBox(width: 8),
           Text('SIMULATION PARAMETERS',
               style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight)),
         ]),
         const SizedBox(height: AppDimensions.space20),
-        _sliderRow('Initial Lump Sum', _fmt(_principal), AppColors.mint, isDark),
+        _sliderRow('Initial Lump Sum', _fmt(_principal), AppColors.primary, isDark),
         Slider(
           value: _principal,
           min: 0,
           max: 1000000,
           divisions: 100,
-          activeColor: AppColors.mint,
+          activeColor: AppColors.primary,
           onChanged: (v) {
             setState(() => _principal = v);
             _runSim();
           },
         ),
-        _sliderRow('Monthly SIP', _fmt(_monthlySip), AppColors.electricCyan, isDark),
+        _sliderRow('Monthly SIP', _fmt(_monthlySip), AppColors.secondary, isDark),
         Slider(
           value: _monthlySip,
           min: 0,
           max: 50000,
           divisions: 50,
-          activeColor: AppColors.electricCyan,
+          activeColor: AppColors.secondary,
           onChanged: (v) {
             setState(() => _monthlySip = v);
             _runSim();
@@ -187,7 +306,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
           min: 1,
           max: 25,
           divisions: 24,
-          activeColor: AppColors.warning,
+          activeColor: AppColors.accent,
           onChanged: (v) {
             setState(() => _durationYears = v);
             _runSim();
@@ -216,18 +335,18 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
       padding: const EdgeInsets.all(AppDimensions.space12),
       margin: const EdgeInsets.only(bottom: AppDimensions.space16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withAlpha(25),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.warning.withAlpha(100)),
+        color: AppColors.warning.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withAlpha(80)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Row(children: [
-          Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.warning),
+          Icon(Icons.warning_amber_outlined, size: 18, color: AppColors.warning),
           SizedBox(width: 8),
           Text('Liquidity & Surplus Notice',
               style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.warning)),
         ]),
         const SizedBox(height: 6),
@@ -250,7 +369,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
       child: Row(children: [
         _chip('ALL', 'All Options', isDark),
         _chip('FD', 'Fixed Deposits', isDark),
-        _chip('RD', 'Recurring', isDark),
+        _chip('RD', 'Recurring Deposits', isDark),
         _chip('PPF', 'PPF', isDark),
         _chip('INDEX_FUNDS', 'Index Funds', isDark),
         _chip('EQUITY', 'Equity Funds', isDark),
@@ -269,15 +388,23 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
           setState(() => _selectedCategory = code);
           _runSim();
         },
-        selectedColor: AppColors.electricCyan.withAlpha(50),
-        checkmarkColor: AppColors.electricCyan,
+        selectedColor: AppColors.lightLavender,
+        checkmarkColor: AppColors.primary,
         backgroundColor:
-            isDark ? AppColors.darkSurface : AppColors.lightSurface,
+            isDark ? AppColors.darkSurfaceVariant : AppColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(
+            color: sel
+                ? AppColors.primary
+                : (isDark ? AppColors.navyBorder : AppColors.cardBorder),
+          ),
+        ),
         labelStyle: TextStyle(
           fontSize: 12,
-          fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
           color: sel
-              ? AppColors.electricCyan
+              ? AppColors.primary
               : (isDark
                   ? AppColors.textSecondaryDark
                   : AppColors.textSecondaryLight),
@@ -291,36 +418,48 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
       margin: const EdgeInsets.only(bottom: AppDimensions.space12),
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0)),
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 0 : 4),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(
-              child: Text(p.productName,
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight))),
+            child: Text(
+              p.productName,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+              ),
+            ),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: p.isGuaranteed
-                  ? AppColors.mint.withAlpha(30)
-                  : AppColors.electricCyan.withAlpha(30),
+                  ? AppColors.success.withAlpha(20)
+                  : AppColors.lightLavender,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              p.isGuaranteed ? 'Guaranteed' : 'Market-Linked',
+              p.isGuaranteed ? 'Guaranteed' : 'Eligible Option',
               style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color:
-                      p.isGuaranteed ? AppColors.mint : AppColors.electricCyan),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: p.isGuaranteed ? AppColors.success : AppColors.primary,
+              ),
             ),
           ),
         ]),
@@ -328,18 +467,30 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
         Text(
           '${p.rateRangeText} • Risk: ${p.risk} • ${p.liquidity}',
           style: TextStyle(
-              fontSize: 11,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight),
+            fontSize: 11,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
         ),
         const Divider(height: 20),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          _statCol('INVESTED', _fmt(p.totalInvested),
-              isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
-          _statCol('EST. GAIN', '+${_fmt(p.estimatedGain)}', AppColors.mint),
-          _statCol('PROJECTED', _fmt(p.estimatedFutureValue),
-              AppColors.electricCyan, large: true),
+          _statCol(
+            'INVESTED',
+            _fmt(p.totalInvested),
+            isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          ),
+          _statCol(
+            'EST. GAIN',
+            '+${_fmt(p.estimatedGain)}',
+            AppColors.success,
+          ),
+          _statCol(
+            'PROJECTED',
+            _fmt(p.estimatedFutureValue),
+            AppColors.primary,
+            large: true,
+          ),
         ]),
         if (p.conservativeValue != null && p.optimisticValue != null) ...[
           const SizedBox(height: 10),
@@ -406,12 +557,15 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
     return Container(
       padding: const EdgeInsets.all(AppDimensions.space12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurfaceVariant,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        color: isDark ? AppColors.darkSurfaceVariant : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Icon(Icons.info_outline_rounded,
-            size: 16, color: AppColors.electricCyan),
+            size: 16, color: AppColors.primary),
         const SizedBox(width: 8),
         Expanded(
             child: Text(
@@ -461,26 +615,29 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
             Container(
               padding: const EdgeInsets.all(AppDimensions.space20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? const [Color(0xFF0F2338), Color(0xFF081420)]
-                      : const [Color(0xFFE8F6FB), Color(0xFFF1F8FC)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
                 ),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                border: Border.all(color: AppColors.electricCyan.withAlpha(80)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(isDark ? 0 : 6),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  const Icon(Icons.auto_graph_rounded,
-                      size: 20, color: AppColors.electricCyan),
+                  const Icon(Icons.auto_graph_outlined,
+                      size: 20, color: AppColors.primary),
                   const SizedBox(width: 8),
                   Text('CUSTOM WHAT-IF MODELER',
                       style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight)),
@@ -502,9 +659,9 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
                             : '-${_fmt(_customDelta.abs())}/mo',
                         style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: _customDelta >= 0
-                                ? AppColors.mint
+                                ? AppColors.success
                                 : AppColors.error),
                       ),
                       Text(
@@ -523,7 +680,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
                   max: 25000,
                   divisions: 80,
                   activeColor:
-                      _customDelta >= 0 ? AppColors.mint : AppColors.error,
+                      _customDelta >= 0 ? AppColors.primary : AppColors.error,
                   onChanged: (v) => setState(() => _customDelta = v),
                 ),
                 const SizedBox(height: 8),
@@ -536,7 +693,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
+                    letterSpacing: 0.8,
                     color: isDark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondaryLight)),
@@ -571,20 +728,20 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
     return Container(
       padding: const EdgeInsets.all(AppDimensions.space12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightLavender.withAlpha(120),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Icon(Icons.flash_on_rounded,
-              size: 16, color: AppColors.electricCyan),
+          const Icon(Icons.flash_on_outlined,
+              size: 16, color: AppColors.primary),
           const SizedBox(width: 6),
           Expanded(
               child: Text(impact,
                   style: const TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.electricCyan))),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary))),
         ]),
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -598,7 +755,7 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
               style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.mint)),
+                  color: AppColors.success)),
         ]),
       ]),
     );
@@ -609,10 +766,18 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
       margin: const EdgeInsets.only(bottom: AppDimensions.space12),
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: isDark ? AppColors.navyBorder : const Color(0xFFD6E4F0)),
+          color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 0 : 4),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -627,14 +792,14 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppColors.electricCyan.withAlpha(25),
+              color: AppColors.lightLavender,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(sc.tag,
                 style: const TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.electricCyan)),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary)),
           ),
         ]),
         const SizedBox(height: 4),
@@ -651,17 +816,17 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
             color: isDark
                 ? AppColors.darkSurfaceVariant
                 : AppColors.lightSurfaceVariant,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(children: [
-            const Icon(Icons.track_changes_rounded,
-                size: 16, color: AppColors.mint),
+            const Icon(Icons.track_changes_outlined,
+                size: 16, color: AppColors.primary),
             const SizedBox(width: 8),
             Expanded(
                 child: Text(sc.goalImpactText,
                     style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight))),
@@ -679,9 +844,364 @@ class _MoneyGrowthPageState extends State<MoneyGrowthPage>
               style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.mint)),
+                  color: AppColors.success)),
         ]),
       ]),
+    );
+  }
+
+  // ─── TAB 3: INSIGHTS ──────────────────────────────────────────────────────
+
+  Widget _buildInsightsTab(bool isDark) {
+    final userId = AuthService.instance.currentUser?.id ?? '';
+    final profile = FinancialProfileService.instance.getProfile(userId);
+    final goals = GoalService.instance.getGoalsForUser(userId);
+    final surplus = profile?.monthlySurplus ?? 0.0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.pagePaddingH,
+        vertical: AppDimensions.space20,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Available Monthly Surplus Card
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.space20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 0 : 6),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AVAILABLE MONTHLY SURPLUS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _fmt(surplus),
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Net surplus after essential expenses available for goal funding and disciplined growth.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.space16),
+
+              // Recommended Allocation Card
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.space20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 0 : 6),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'RECOMMENDED ALLOCATION',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.lightLavender,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Balanced Horizon',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 30,
+                            child: Container(
+                              height: 8,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 40,
+                            child: Container(
+                              height: 8,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 30,
+                            child: Container(
+                              height: 8,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _allocationLegendRow(
+                      color: AppColors.primary,
+                      title: 'Emergency & Liquid Reserve (30%)',
+                      amount: _fmt(surplus * 0.3),
+                      desc: 'Fixed Deposits, Liquid Funds, High-yield Savings',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _allocationLegendRow(
+                      color: AppColors.secondary,
+                      title: 'Targeted Goals Funding (40%)',
+                      amount: _fmt(surplus * 0.4),
+                      desc: 'Recurring Deposits, Conservative Debt & Hybrid Funds',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _allocationLegendRow(
+                      color: AppColors.accent,
+                      title: 'Wealth Growth & Equity (30%)',
+                      amount: _fmt(surplus * 0.3),
+                      desc: 'Diversified Index Funds, Nifty 50, Long-term PPF',
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.space16),
+
+              // Goal Impact Card
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.space20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AppColors.navyBorder : AppColors.cardBorder,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 0 : 6),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'GOAL IMPACT ANALYSIS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      goals.isEmpty
+                          ? 'No active goals recorded. Create a goal to see how systematic contributions accelerate your milestones.'
+                          : 'Allocating 40% of your surplus (${_fmt(surplus * 0.4)}/mo) directly to active goals will keep your timeline on track.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    if (goals.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      ...goals.map((g) {
+                        final req = g.remainingAmount;
+                        final alloc = surplus * 0.4;
+                        final projectedMonths = alloc > 0 ? (req / alloc).ceil() : 0;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkSurfaceVariant
+                                : AppColors.lightSurfaceVariant,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                size: 18,
+                                color: AppColors.success,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  g.name,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.textPrimaryDark
+                                        : AppColors.textPrimaryLight,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                projectedMonths > 0
+                                    ? 'Est. ~$projectedMonths mo'
+                                    : 'Funded',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.space32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _allocationLegendRow({
+    required Color color,
+    required String title,
+    required String amount,
+    required String desc,
+    required bool isDark,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  Text(
+                    amount,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
