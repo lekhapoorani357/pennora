@@ -12,18 +12,21 @@ import logging
 import math
 import os
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from app.config import settings
 from app.database import get_collection, DuplicateKeyError
 from app.orchestration.service import GoalSyncGraphService
-from app.rag.service import MerchantHybridResolutionService
 from .models import (
     ProcessTransactionRequest,
     ProcessTransactionResponse,
     ProcessingStageInfo,
 )
 from .user_resolver import UserResolverService, UserResolutionError
+
+if TYPE_CHECKING:
+    from app.rag.service import MerchantHybridResolutionService
+
 
 logger = logging.getLogger("goalsync.pipeline")
 
@@ -50,9 +53,12 @@ class TransactionPipelineService:
         return self._graph_service
 
     @property
-    def rag_service(self) -> Optional[MerchantHybridResolutionService]:
+    def rag_service(self) -> Optional["MerchantHybridResolutionService"]:
         if self._rag_service is None:
             try:
+                # Lazy import: sentence-transformers + faiss load only on first use,
+                # not at process startup, avoiding cold-start memory spikes.
+                from app.rag.service import MerchantHybridResolutionService  # noqa: PLC0415
                 self._rag_service = MerchantHybridResolutionService.create_default()
             except Exception as e:
                 logger.warning("Merchant RAG service initialization failed: %s", type(e).__name__)
